@@ -20,6 +20,8 @@ const FrameSequence = () => {
     isScrollMode: false, // Track if we're in scroll-controlled mode
     scrollStartFrame: 163, // Starting frame for scroll after button click
     scrollBaseline: 0, // Scroll Y position when scroll mode starts
+    isAnimatingToEnd: false, // Track if button animation is running
+    buttonAnimationTimeout: null, // Store animation timeout ID
   });
 
   const CONFIG = {
@@ -84,7 +86,36 @@ const FrameSequence = () => {
     const section = document.getElementById('frameSection');
     if (!section) return;
 
-    // If in scroll mode (after button click)
+    // If animating after button click, user scroll interrupts it
+    if (stateRef.current.isAnimatingToEnd) {
+      // Stop the animation
+      if (stateRef.current.buttonAnimationTimeout) {
+        clearTimeout(stateRef.current.buttonAnimationTimeout);
+        stateRef.current.buttonAnimationTimeout = null;
+      }
+      stateRef.current.isAnimatingToEnd = false;
+
+      // Get current scroll position and frame
+      const currentScrollY = window.scrollY;
+      const currentDisplayFrame = stateRef.current.currentFrame;
+
+      // Enable scroll mode immediately from current frame
+      stateRef.current.isScrollMode = true;
+      stateRef.current.scrollStartFrame = currentDisplayFrame;
+      stateRef.current.scrollBaseline = currentScrollY;
+      stateRef.current.targetFrame = currentDisplayFrame;
+      setIsScrollMode(true);
+
+      // Re-enable scroll
+      if (section) {
+        section.style.pointerEvents = 'auto';
+      }
+
+      console.log('⚡ Animation interrupted by scroll at frame:', currentDisplayFrame);
+      console.log('📍 Scroll mode enabled from frame:', currentDisplayFrame);
+    }
+
+    // If in scroll mode (after button click or after interruption)
     if (stateRef.current.isScrollMode) {
       const scrollY = window.scrollY;
 
@@ -113,18 +144,18 @@ const FrameSequence = () => {
     stateRef.current.targetFrame = scrollProgress * (CONFIG.totalFrames - 1);
   };
 
-  // Handle button click - animate to frame 395 then enable scroll mode
+  // Handle button click - animate to frame 400 then enable scroll mode
   const handleButtonClick = () => {
     console.log('Button clicked, starting animation from frame:', stateRef.current.currentFrame);
 
     // Hide all text immediately
     setHideText(true);
 
-    // Disable scroll during animation
-    const section = document.getElementById('frameSection');
-    if (section) {
-      section.style.pointerEvents = 'none';
-    }
+    // Enable section height expansion immediately for smooth transition
+    setIsScrollMode(true);
+
+    // Mark that we're animating
+    stateRef.current.isAnimatingToEnd = true;
 
     // Animate from current frame to frame 400
     const startFrame = stateRef.current.currentFrame;
@@ -133,6 +164,12 @@ const FrameSequence = () => {
     let currentAnimFrame = startFrame;
 
     const animateToEnd = () => {
+      // Check if animation was interrupted
+      if (!stateRef.current.isAnimatingToEnd) {
+        console.log('Animation was interrupted');
+        return;
+      }
+
       if (currentAnimFrame < endFrame) {
         currentAnimFrame++;
         displayFrame(currentAnimFrame);
@@ -143,25 +180,20 @@ const FrameSequence = () => {
           console.log('Animation progress:', currentAnimFrame, '/', endFrame);
         }
 
-        setTimeout(animateToEnd, frameDuration);
+        stateRef.current.buttonAnimationTimeout = setTimeout(animateToEnd, frameDuration);
       } else {
-        // Animation complete, switch to scroll mode
+        // Animation complete naturally, switch to scroll mode
         console.log('✅ Animation complete at frame:', currentAnimFrame);
         console.log('📸 Last frame displayed:', getFramePath(currentAnimFrame));
-        console.log('🖱️ Switching to scroll mode (frames 163-400)...');
+        console.log('🖱️ Switching to scroll mode (frames 0-400)...');
 
+        stateRef.current.isAnimatingToEnd = false;
         const currentDisplayFrame = stateRef.current.currentFrame;
 
-        // Enable scroll mode first
+        // Enable scroll mode
         stateRef.current.isScrollMode = true;
-        stateRef.current.scrollStartFrame = currentDisplayFrame; // Start from current frame
-        stateRef.current.targetFrame = currentDisplayFrame; // Keep displaying current frame
-        setIsScrollMode(true);
-
-        // Re-enable scroll
-        if (section) {
-          section.style.pointerEvents = 'auto';
-        }
+        stateRef.current.scrollStartFrame = currentDisplayFrame;
+        stateRef.current.targetFrame = currentDisplayFrame;
 
         // Wait for section height to update, then scroll to middle position
         setTimeout(() => {
