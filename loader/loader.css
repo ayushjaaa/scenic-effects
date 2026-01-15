@@ -1,0 +1,105 @@
+/* ============================================
+   LOADER STYLES - Centered Container
+   ============================================ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #000; /* Dark background for contrast */
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Main Loader Container - Centered */
+.loader-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem; /* Space between video and bar */
+  width: 90%;
+  max-width: 600px;
+}
+
+/* Video Styling */
+.loader-video {
+  width: 100%;
+  max-width: 400px;
+  height: auto;
+  display: block;
+  opacity: 1; /* Visible by default */
+  filter: brightness(1.1); /* Slight brightness boost */
+}
+
+/* Progress Bar Wrapper (Track) */
+.progress-bar-wrapper {
+  width: 100%;
+  height: 3px; /* Made slightly thicker for better visibility */
+  background: rgba(255, 255, 255, 0.2); /* More visible track */
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Progress Bar (Fill) */
+.progress-bar {
+  width: 0%; /* Start at 0% */
+  height: 100%;
+  background: rgba(255, 255, 255, 0); /* Start transparent */
+  border-radius: 2px;
+  transform-origin: left center;
+
+  /* Smooth gradient for visual interest */
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.5) 50%,
+    rgba(255, 255, 255, 1) 100%
+  );
+  background-size: 200% 100%;
+  background-position: 0% 0%;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .loader-container {
+    gap: 1.5rem;
+  }
+
+  .loader-video {
+    max-width: 300px;
+  }
+}
+
+@media (max-width: 480px) {
+  .loader-container {
+    gap: 1rem;
+  }
+
+  .loader-video {
+    max-width: 250px;
+  }
+
+  .progress-bar-wrapper {
+    height: 1.5px;
+  }
+}
+
+/* Accessibility: Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .loader-video {
+    opacity: 1 !important;
+  }
+
+  .progress-bar {
+    transition: none !important;
+  }
+}

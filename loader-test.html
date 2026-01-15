@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loader Test - Visible Version</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #000;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    /* Main Loader Container - Centered */
+    .loader-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+      width: 90%;
+      max-width: 600px;
+    }
+
+    /* Video Styling - VISIBLE BY DEFAULT */
+    .loader-video {
+      width: 100%;
+      max-width: 400px;
+      height: auto;
+      display: block;
+      opacity: 1; /* Changed from 0 to 1 - visible immediately */
+      filter: brightness(1.1);
+    }
+
+    /* Progress Bar Wrapper (Track) */
+    .progress-bar-wrapper {
+      width: 100%;
+      height: 3px; /* Made slightly thicker for visibility */
+      background: rgba(255, 255, 255, 0.2); /* More visible track */
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Progress Bar (Fill) */
+    .progress-bar {
+      width: 0%;
+      height: 100%;
+      border-radius: 3px;
+      transform-origin: left center;
+      background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.3) 0%,
+        rgba(255, 255, 255, 0.7) 50%,
+        rgba(255, 255, 255, 1) 100%
+      );
+      background-size: 200% 100%;
+      background-position: 0% 0%;
+    }
+
+    /* Debug info */
+    .debug-info {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      color: white;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-family: 'Courier New', monospace;
+      z-index: 1000;
+    }
+
+    .debug-info span {
+      display: block;
+      margin: 5px 0;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .loader-container {
+        gap: 1.5rem;
+      }
+
+      .loader-video {
+        max-width: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Debug Info -->
+  <div class="debug-info">
+    <span>Progress: <strong id="debugProgress">0%</strong></span>
+    <span>Video State: <strong id="debugVideoState">Loading...</strong></span>
+    <span>Time: <strong id="debugTime">0.0s</strong></span>
+  </div>
+
+  <!-- Loader Container (Centered) -->
+  <div class="loader-container">
+
+    <!-- Video on top -->
+    <video
+      class="loader-video"
+      src="web-loader.mp4"
+      muted
+      playsinline
+      preload="auto"
+      autoplay
+      loop
+    ></video>
+
+    <!-- Progress Bar Below Video -->
+    <div class="progress-bar-wrapper">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+  </div>
+
+  <script>
+    // Configuration
+    const CONFIG = {
+      loadDuration: 4000, // 4 seconds
+    };
+
+    // Elements
+    const video = document.querySelector('.loader-video');
+    const progressBar = document.getElementById('progressBar');
+    const debugProgress = document.getElementById('debugProgress');
+    const debugVideoState = document.getElementById('debugVideoState');
+    const debugTime = document.getElementById('debugTime');
+
+    // State
+    let animationFrameId;
+    let startTime;
+
+    console.log('🎬 Loader initializing...');
+
+    // Video event listeners for debugging
+    video.addEventListener('loadstart', () => {
+      console.log('📹 Video: loadstart');
+      debugVideoState.textContent = 'Load Started';
+    });
+
+    video.addEventListener('loadeddata', () => {
+      console.log('📹 Video: loadeddata');
+      debugVideoState.textContent = 'Data Loaded';
+    });
+
+    video.addEventListener('canplay', () => {
+      console.log('📹 Video: canplay');
+      debugVideoState.textContent = 'Can Play';
+    });
+
+    video.addEventListener('playing', () => {
+      console.log('📹 Video: playing');
+      debugVideoState.textContent = 'Playing ✓';
+    });
+
+    video.addEventListener('error', (e) => {
+      console.error('❌ Video error:', e);
+      debugVideoState.textContent = 'Error!';
+      debugVideoState.style.color = '#ff5555';
+    });
+
+    // Initialize
+    function init() {
+      console.log('🚀 Starting loader animation');
+
+      // Play video
+      video.play()
+        .then(() => {
+          console.log('✅ Video playing successfully');
+        })
+        .catch(err => {
+          console.warn('⚠️ Video autoplay blocked:', err);
+          debugVideoState.textContent = 'Autoplay Blocked';
+        });
+
+      // Start progress animation
+      animateProgressBar();
+    }
+
+    // Animate progress bar
+    function animateProgressBar() {
+      startTime = performance.now();
+
+      function animate(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / CONFIG.loadDuration, 1);
+
+        // Update bar width (0% → 100%)
+        progressBar.style.width = `${progress * 100}%`;
+
+        // Update opacity
+        progressBar.style.opacity = progress;
+
+        // Shift gradient
+        progressBar.style.backgroundPosition = `${progress * 100}% 0%`;
+
+        // Update debug info
+        debugProgress.textContent = `${Math.round(progress * 100)}%`;
+        debugTime.textContent = `${(elapsed / 1000).toFixed(1)}s`;
+
+        // Continue animation
+        if (progress < 1) {
+          animationFrameId = requestAnimationFrame(animate);
+        } else {
+          console.log('✅ Loader animation complete');
+          onLoadComplete();
+        }
+      }
+
+      animationFrameId = requestAnimationFrame(animate);
+    }
+
+    // Load complete
+    function onLoadComplete() {
+      console.log('🎉 Load complete!');
+      debugProgress.style.color = '#5fff5f';
+
+      // Optional: Fade out after 500ms
+      setTimeout(() => {
+        const container = document.querySelector('.loader-container');
+        container.style.transition = 'opacity 600ms ease-out';
+        container.style.opacity = '0';
+
+        setTimeout(() => {
+          console.log('👋 Loader hidden, ready for main content');
+        }, 600);
+      }, 500);
+    }
+
+    // Start when page loads
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+
+    // Cleanup
+    window.addEventListener('beforeunload', () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    });
+  </script>
+
+</body>
+</html>
