@@ -99,12 +99,21 @@ const FrameSequence = () => {
       }
       stateRef.current.isAnimatingToEnd = false;
 
-      const currentScrollY = window.scrollY;
       const currentDisplayFrame = stateRef.current.currentFrame;
+      const middleScroll = 20000;
 
+      // Calculate scroll position for current frame
+      // Frame 400 = 20000px, Frame 0 = 14000px (20000 - 400*15)
+      // For frame 250: 20000 - (400-250)*15 = 20000 - 2250 = 17750px
+      const scrollPosition = middleScroll - (CONFIG.scrollEndFrame - currentDisplayFrame) * CONFIG.pixelsPerFrame;
+
+      // Scroll to calculated position instantly (with space above for backward scrolling)
+      window.scrollTo({ top: scrollPosition, behavior: 'instant' });
+
+      // Set proper baseline and scroll mode (same as when reaching frame 400)
       stateRef.current.isScrollMode = true;
-      stateRef.current.scrollStartFrame = currentDisplayFrame;
-      stateRef.current.scrollBaseline = currentScrollY;
+      stateRef.current.scrollStartFrame = CONFIG.scrollEndFrame; // Always 400 for consistency
+      stateRef.current.scrollBaseline = middleScroll; // 20000px
       stateRef.current.targetFrame = currentDisplayFrame;
       setIsScrollMode(true);
 
@@ -112,7 +121,9 @@ const FrameSequence = () => {
         section.style.pointerEvents = 'auto';
       }
 
-      console.log('⚡ Animation interrupted by scroll at frame:', currentDisplayFrame);
+      console.log('⚡ Animation interrupted at frame:', currentDisplayFrame);
+      console.log('📍 Scroll positioned at:', scrollPosition, 'px (baseline: ' + middleScroll + 'px)');
+      console.log('🎯 Can now scroll backward to reach frame 0');
     }
 
     // If in scroll mode (after button click)
