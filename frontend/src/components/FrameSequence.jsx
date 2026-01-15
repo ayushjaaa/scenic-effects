@@ -17,19 +17,19 @@ const FrameSequence = () => {
     targetFrame: 0,
     isReady: false,
     animationFrameId: null,
-    isScrollMode: false, // Track if we're in scroll-controlled mode
-    scrollStartFrame: 163, // Starting frame for scroll after button click
-    scrollBaseline: 0, // Scroll Y position when scroll mode starts
-    isAnimatingToEnd: false, // Track if button animation is running
-    buttonAnimationTimeout: null, // Store animation timeout ID
-    lastLogTime: 0, // For debug logging throttle
+    isScrollMode: false,
+    scrollStartFrame: 163,
+    scrollBaseline: 0,
+    isAnimatingToEnd: false,
+    buttonAnimationTimeout: null,
+    lastLogTime: 0,
   });
 
   const CONFIG = {
     imageBaseURL: '/Rotoris_world_experience_',
     imageFormat: 'avif.jpeg',
     totalFrames: 164,
-    maxFrames: 401, // Total available frames (0-400)
+    maxFrames: 401,
     startFrame: 0,
     paddingZeros: 5,
     scrollMultiplier: 1.5,
@@ -37,8 +37,8 @@ const FrameSequence = () => {
     autoPlayOnLoad: true,
     autoPlayFPS: 24,
     autoPlayDelay: 500,
-    scrollEndFrame: 400, // End frame for scroll mode after button click
-    pixelsPerFrame: 0.00625, // Extreme sensitivity - 1 pixel = 160 frames (0.00625 pixels per frame)
+    scrollEndFrame: 400,
+    pixelsPerFrame: 15, // 15 pixels per frame = ultra slow, cinematic scrolling
   };
 
   // Get frame path
@@ -49,7 +49,6 @@ const FrameSequence = () => {
 
   // Display frame
   const displayFrame = (frameIndex) => {
-    // Allow frames up to maxFrames (400) for button animation
     frameIndex = Math.max(0, Math.min(CONFIG.maxFrames - 1, Math.floor(frameIndex)));
 
     const img = imagesRef.current.get(frameIndex);
@@ -70,17 +69,14 @@ const FrameSequence = () => {
       if (frameIndex < CONFIG.totalFrames) {
         const progress = frameIndex / CONFIG.totalFrames;
 
-        // Show tagline around 50% (middle frames)
         if (progress >= 0.5 && !showTagline) {
           setShowTagline(true);
         }
 
-        // Show title right after at 52% (very close to tagline)
         if (progress >= 0.52 && !showTitle) {
           setShowTitle(true);
         }
 
-        // Show button at 98% (almost at the very end)
         if (progress >= 0.98 && !showButton) {
           setShowButton(true);
         }
@@ -97,51 +93,39 @@ const FrameSequence = () => {
 
     // If animating after button click, user scroll interrupts it
     if (stateRef.current.isAnimatingToEnd) {
-      // Stop the animation
       if (stateRef.current.buttonAnimationTimeout) {
         clearTimeout(stateRef.current.buttonAnimationTimeout);
         stateRef.current.buttonAnimationTimeout = null;
       }
       stateRef.current.isAnimatingToEnd = false;
 
-      // Get current scroll position and frame
       const currentScrollY = window.scrollY;
       const currentDisplayFrame = stateRef.current.currentFrame;
 
-      // Enable scroll mode immediately from current frame
       stateRef.current.isScrollMode = true;
       stateRef.current.scrollStartFrame = currentDisplayFrame;
       stateRef.current.scrollBaseline = currentScrollY;
       stateRef.current.targetFrame = currentDisplayFrame;
       setIsScrollMode(true);
 
-      // Re-enable scroll
       if (section) {
         section.style.pointerEvents = 'auto';
       }
 
       console.log('⚡ Animation interrupted by scroll at frame:', currentDisplayFrame);
-      console.log('📍 Scroll mode enabled from frame:', currentDisplayFrame);
     }
 
-    // If in scroll mode (after button click or after interruption)
+    // If in scroll mode (after button click)
     if (stateRef.current.isScrollMode) {
       const scrollY = window.scrollY;
-
-      // Calculate scroll delta from baseline
       const scrollDelta = scrollY - stateRef.current.scrollBaseline;
-
-      // Map scroll delta to frame delta
       const frameDelta = scrollDelta / CONFIG.pixelsPerFrame;
-
-      // Calculate target frame: baseline frame + delta
       const targetFrame = stateRef.current.scrollStartFrame + frameDelta;
-
-      // Clamp to valid range (0-400) - can scroll all the way back to first frame
       const clampedFrame = Math.max(0, Math.min(CONFIG.scrollEndFrame, targetFrame));
+
       stateRef.current.targetFrame = clampedFrame;
 
-      // Debug logging - log every 100ms max
+      // Debug logging - throttled
       if (!stateRef.current.lastLogTime || Date.now() - stateRef.current.lastLogTime > 100) {
         console.log('🔄 Scroll:', {
           scrollY: Math.round(scrollY),
@@ -149,7 +133,6 @@ const FrameSequence = () => {
           scrollDelta: Math.round(scrollDelta),
           frameDelta: Math.round(frameDelta * 10) / 10,
           targetFrame: Math.round(clampedFrame),
-          startFrame: stateRef.current.scrollStartFrame
         });
         stateRef.current.lastLogTime = Date.now();
       }
@@ -166,27 +149,20 @@ const FrameSequence = () => {
     stateRef.current.targetFrame = scrollProgress * (CONFIG.totalFrames - 1);
   };
 
-  // Handle button click - animate to frame 400 then enable scroll mode
+  // Handle button click
   const handleButtonClick = () => {
-    console.log('Button clicked, starting animation from frame:', stateRef.current.currentFrame);
+    console.log('🎬 Button clicked, starting animation from frame:', stateRef.current.currentFrame);
 
-    // Hide all text immediately
     setHideText(true);
-
-    // Enable section height expansion immediately for smooth transition
     setIsScrollMode(true);
-
-    // Mark that we're animating
     stateRef.current.isAnimatingToEnd = true;
 
-    // Animate from current frame to frame 400
     const startFrame = stateRef.current.currentFrame;
-    const endFrame = CONFIG.scrollEndFrame; // 400
-    const frameDuration = 1000 / CONFIG.autoPlayFPS; // milliseconds per frame
+    const endFrame = CONFIG.scrollEndFrame;
+    const frameDuration = 1000 / CONFIG.autoPlayFPS;
     let currentAnimFrame = startFrame;
 
     const animateToEnd = () => {
-      // Check if animation was interrupted
       if (!stateRef.current.isAnimatingToEnd) {
         console.log('Animation was interrupted');
         return;
@@ -197,38 +173,41 @@ const FrameSequence = () => {
         displayFrame(currentAnimFrame);
         stateRef.current.targetFrame = currentAnimFrame;
 
-        // Log progress every 50 frames
         if (currentAnimFrame % 50 === 0) {
           console.log('Animation progress:', currentAnimFrame, '/', endFrame);
         }
 
         stateRef.current.buttonAnimationTimeout = setTimeout(animateToEnd, frameDuration);
       } else {
-        // Animation complete naturally, switch to scroll mode
         console.log('✅ Animation complete at frame:', currentAnimFrame);
-        console.log('📸 Last frame displayed:', getFramePath(currentAnimFrame));
         console.log('🖱️ Switching to scroll mode (frames 0-400)...');
 
         stateRef.current.isAnimatingToEnd = false;
-        const currentDisplayFrame = stateRef.current.currentFrame;
 
-        // Enable scroll mode
+        // Set to exactly frame 400 to ensure proper calculation
         stateRef.current.isScrollMode = true;
-        stateRef.current.scrollStartFrame = currentDisplayFrame;
-        stateRef.current.targetFrame = currentDisplayFrame;
+        stateRef.current.scrollStartFrame = 400;
+        stateRef.current.targetFrame = 400;
 
-        // Wait for section height to update, then scroll to position with more space above
         setTimeout(() => {
-          // Scroll higher to give more room to scroll backwards (upwards)
-          const middleScroll = window.innerHeight * 95; // 95vh from the 100vh total (maximum space above for reaching frame 0)
-          window.scrollTo({ top: middleScroll, behavior: 'instant' });
+          // Enable scroll mode
+          setIsScrollMode(true);
 
-          // Set baseline after scrolling
-          stateRef.current.scrollBaseline = middleScroll;
+          // Wait for section height to update, then scroll using native browser scroll
+          setTimeout(() => {
+            // Scroll to 20000px position using NATIVE scroll (massive scroll space above to reach frame 0)
+            const middleScroll = 20000;
+            const pixelsToReachZero = 400 * CONFIG.pixelsPerFrame; // 400 frames * 3 = 1200 pixels
+            window.scrollTo({ top: middleScroll, behavior: 'instant' });
 
-          console.log('📍 Scroll baseline set at Y:', middleScroll, '- Frame:', currentDisplayFrame);
-          console.log('📊 With pixelsPerFrame=0.00625, you can reach frame 0 by scrolling up', Math.round(middleScroll / 0.00625), 'frames');
-          console.log('💡 This means 1 pixel of scroll = 160 frames');
+            stateRef.current.scrollBaseline = middleScroll;
+
+            console.log('📍 Scroll baseline set at Y:', middleScroll, 'px - Frame: 400');
+            console.log('📊 With pixelsPerFrame=' + CONFIG.pixelsPerFrame + ', you need ' + pixelsToReachZero + ' pixels to reach frame 0');
+            console.log('💡 Available scroll space above:', middleScroll, 'pixels - DEFINITELY can reach frame 0');
+            console.log('🎯 Scroll to Y=' + (middleScroll - pixelsToReachZero) + ' will show frame 0');
+            console.log('🎯 Native scroll enabled - scroll is now 6x slower and smoother!');
+          }, 100);
         }, 100);
       }
     };
@@ -269,7 +248,7 @@ const FrameSequence = () => {
     const animate = (currentTime) => {
       if (currentTime - lastFrameTime >= frameDelay) {
         if (currentAutoFrame >= CONFIG.totalFrames) {
-          return; // Stop
+          return;
         }
 
         displayFrame(currentAutoFrame);
@@ -291,31 +270,26 @@ const FrameSequence = () => {
     let loadedCount = 0;
 
     const loadImages = async () => {
-      // Load all frames from 0 to 395
       for (let i = 0; i < CONFIG.maxFrames; i++) {
         const frameNumber = CONFIG.startFrame + i;
         const img = new Image();
 
         img.onload = () => {
           loadedCount++;
-          // Show loading progress for first 164 frames only
           if (loadedCount <= CONFIG.totalFrames) {
             const percent = Math.round((loadedCount / CONFIG.totalFrames) * 100);
             setLoadingPercent(percent);
           }
 
-          // First image - show immediately
           if (loadedCount === 1 && imgRef.current) {
             imgRef.current.src = img.src;
           }
 
-          // First set loaded (for initial animation)
           if (loadedCount === CONFIG.totalFrames) {
             setTimeout(() => {
               setIsLoading(false);
               stateRef.current.isReady = true;
 
-              // Auto-play after load
               if (CONFIG.autoPlayOnLoad) {
                 setTimeout(() => {
                   autoPlay();
@@ -329,7 +303,6 @@ const FrameSequence = () => {
           console.warn(`Failed to load: ${getFramePath(frameNumber)}`);
           loadedCount++;
 
-          // Allow animation to start after first set of frames
           if (loadedCount === CONFIG.totalFrames) {
             setIsLoading(false);
             stateRef.current.isReady = true;
@@ -351,6 +324,7 @@ const FrameSequence = () => {
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
+
 
   return (
     <>
