@@ -12,6 +12,8 @@ const FrameSequence = () => {
 
   const imgRef = useRef(null);
   const imagesRef = useRef(new Map());
+  const progressAnimationRef = useRef(null);
+  const progressStartTimeRef = useRef(null);
   const stateRef = useRef({
     currentFrame: 0,
     targetFrame: 0,
@@ -23,6 +25,7 @@ const FrameSequence = () => {
     isAnimatingToEnd: false,
     buttonAnimationTimeout: null,
     lastLogTime: 0,
+    framesLoaded: false,
   });
 
   const CONFIG = {
@@ -276,6 +279,40 @@ const FrameSequence = () => {
     requestAnimationFrame(animate);
   };
 
+  // Animate progress bar from 0 to 100% over fixed duration
+  useEffect(() => {
+    const loadingDuration = 4000; // 4 seconds
+
+    const animateProgress = (currentTime) => {
+      if (!progressStartTimeRef.current) {
+        progressStartTimeRef.current = currentTime;
+      }
+
+      const elapsed = currentTime - progressStartTimeRef.current;
+      const progress = Math.min(elapsed / loadingDuration, 1);
+      const percent = Math.round(progress * 100);
+
+      setLoadingPercent(percent);
+
+      if (progress < 1) {
+        progressAnimationRef.current = requestAnimationFrame(animateProgress);
+      } else {
+        // Progress complete - hide loading screen
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 300);
+      }
+    };
+
+    progressAnimationRef.current = requestAnimationFrame(animateProgress);
+
+    return () => {
+      if (progressAnimationRef.current) {
+        cancelAnimationFrame(progressAnimationRef.current);
+      }
+    };
+  }, []);
+
   // Preload images
   useEffect(() => {
     let loadedCount = 0;
@@ -287,26 +324,20 @@ const FrameSequence = () => {
 
         img.onload = () => {
           loadedCount++;
-          if (loadedCount <= CONFIG.totalFrames) {
-            const percent = Math.round((loadedCount / CONFIG.totalFrames) * 100);
-            setLoadingPercent(percent);
-          }
 
           if (loadedCount === 1 && imgRef.current) {
             imgRef.current.src = img.src;
           }
 
           if (loadedCount === CONFIG.totalFrames) {
-            setTimeout(() => {
-              setIsLoading(false);
-              stateRef.current.isReady = true;
+            stateRef.current.framesLoaded = true;
+            stateRef.current.isReady = true;
 
-              if (CONFIG.autoPlayOnLoad) {
-                setTimeout(() => {
-                  autoPlay();
-                }, CONFIG.autoPlayDelay);
-              }
-            }, 300);
+            if (CONFIG.autoPlayOnLoad) {
+              setTimeout(() => {
+                autoPlay();
+              }, CONFIG.autoPlayDelay);
+            }
           }
         };
 
@@ -315,7 +346,7 @@ const FrameSequence = () => {
           loadedCount++;
 
           if (loadedCount === CONFIG.totalFrames) {
-            setIsLoading(false);
+            stateRef.current.framesLoaded = true;
             stateRef.current.isReady = true;
           }
         };
@@ -342,14 +373,28 @@ const FrameSequence = () => {
       {/* Loading Overlay */}
       {isLoading && (
         <div className="frame-loading-overlay">
-          <div className="frame-loading-text">
-            Loading frames... <span>{loadingPercent}</span>%
-          </div>
+          {/* Video */}
+          <video
+            className="frame-loading-video"
+            src="/web-loader.mp4"
+            muted
+            playsInline
+            loop
+            autoPlay
+            preload="auto"
+          />
+
+          {/* Progress Bar */}
           <div className="frame-loading-progress">
             <div
               className="frame-loading-bar"
               style={{ width: `${loadingPercent}%` }}
             />
+          </div>
+
+          {/* Percentage Counter */}
+          <div className="frame-loading-percentage">
+            {loadingPercent}%
           </div>
         </div>
       )}
