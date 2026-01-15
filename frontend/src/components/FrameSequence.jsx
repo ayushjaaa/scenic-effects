@@ -97,8 +97,8 @@ const FrameSequence = () => {
       // Calculate target frame: baseline frame + delta
       const targetFrame = stateRef.current.scrollStartFrame + frameDelta;
 
-      // Clamp to valid range (163-400)
-      const clampedFrame = Math.max(163, Math.min(CONFIG.scrollEndFrame, targetFrame));
+      // Clamp to valid range (0-400) - can scroll all the way back to first frame
+      const clampedFrame = Math.max(0, Math.min(CONFIG.scrollEndFrame, targetFrame));
       stateRef.current.targetFrame = clampedFrame;
 
       return;
@@ -126,9 +126,9 @@ const FrameSequence = () => {
       section.style.pointerEvents = 'none';
     }
 
-    // Animate from current frame to frame 395
+    // Animate from current frame to frame 400
     const startFrame = stateRef.current.currentFrame;
-    const endFrame = CONFIG.maxFrames - 1; // 395
+    const endFrame = CONFIG.scrollEndFrame; // 400
     const frameDuration = 1000 / CONFIG.autoPlayFPS; // milliseconds per frame
     let currentAnimFrame = startFrame;
 
@@ -166,7 +166,7 @@ const FrameSequence = () => {
         // Wait for section height to update, then scroll to middle position
         setTimeout(() => {
           // Scroll to middle of the section so user can scroll up or down
-          const middleScroll = window.innerHeight * 2; // 2vh from the 5vh total
+          const middleScroll = window.innerHeight * 15; // 15vh from the 30vh total (middle position)
           window.scrollTo({ top: middleScroll, behavior: 'instant' });
 
           // Set baseline after scrolling to middle
@@ -317,7 +317,7 @@ const FrameSequence = () => {
       <section
         className={`frame-sequence-section ${isScrollMode ? 'scroll-mode' : ''}`}
         id="frameSection"
-        style={isScrollMode ? { height: '500vh' } : {}}
+        style={isScrollMode ? { height: '3000vh' } : {}}
       >
         {/* Sticky container for scroll mode */}
         <div className={isScrollMode ? 'sticky-frame-container' : 'frame-container'}>
