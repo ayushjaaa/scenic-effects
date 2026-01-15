@@ -22,6 +22,7 @@ const FrameSequence = () => {
     scrollBaseline: 0, // Scroll Y position when scroll mode starts
     isAnimatingToEnd: false, // Track if button animation is running
     buttonAnimationTimeout: null, // Store animation timeout ID
+    lastLogTime: 0, // For debug logging throttle
   });
 
   const CONFIG = {
@@ -37,7 +38,7 @@ const FrameSequence = () => {
     autoPlayFPS: 24,
     autoPlayDelay: 500,
     scrollEndFrame: 400, // End frame for scroll mode after button click
-    pixelsPerFrame: 20, // Scroll sensitivity (lower = more sensitive)
+    pixelsPerFrame: 0.00625, // Extreme sensitivity - 1 pixel = 160 frames (0.00625 pixels per frame)
   };
 
   // Get frame path
@@ -48,7 +49,7 @@ const FrameSequence = () => {
 
   // Display frame
   const displayFrame = (frameIndex) => {
-    // Allow frames up to maxFrames (395) for button animation
+    // Allow frames up to maxFrames (400) for button animation
     frameIndex = Math.max(0, Math.min(CONFIG.maxFrames - 1, Math.floor(frameIndex)));
 
     const img = imagesRef.current.get(frameIndex);
@@ -56,6 +57,14 @@ const FrameSequence = () => {
     if (img && img.complete && imgRef.current) {
       imgRef.current.src = img.src;
       stateRef.current.currentFrame = frameIndex;
+
+      // Show current frame number on screen for debugging
+      if (stateRef.current.isScrollMode) {
+        const debugDiv = document.getElementById('frame-debug');
+        if (debugDiv) {
+          debugDiv.textContent = `Frame: ${Math.round(frameIndex)}`;
+        }
+      }
 
       // Staggered text appearance based on frame progress (only for first 164 frames)
       if (frameIndex < CONFIG.totalFrames) {
@@ -132,6 +141,19 @@ const FrameSequence = () => {
       const clampedFrame = Math.max(0, Math.min(CONFIG.scrollEndFrame, targetFrame));
       stateRef.current.targetFrame = clampedFrame;
 
+      // Debug logging - log every 100ms max
+      if (!stateRef.current.lastLogTime || Date.now() - stateRef.current.lastLogTime > 100) {
+        console.log('🔄 Scroll:', {
+          scrollY: Math.round(scrollY),
+          baseline: Math.round(stateRef.current.scrollBaseline),
+          scrollDelta: Math.round(scrollDelta),
+          frameDelta: Math.round(frameDelta * 10) / 10,
+          targetFrame: Math.round(clampedFrame),
+          startFrame: stateRef.current.scrollStartFrame
+        });
+        stateRef.current.lastLogTime = Date.now();
+      }
+
       return;
     }
 
@@ -195,16 +217,18 @@ const FrameSequence = () => {
         stateRef.current.scrollStartFrame = currentDisplayFrame;
         stateRef.current.targetFrame = currentDisplayFrame;
 
-        // Wait for section height to update, then scroll to middle position
+        // Wait for section height to update, then scroll to position with more space above
         setTimeout(() => {
-          // Scroll to middle of the section so user can scroll up or down
-          const middleScroll = window.innerHeight * 15; // 15vh from the 30vh total (middle position)
+          // Scroll higher to give more room to scroll backwards (upwards)
+          const middleScroll = window.innerHeight * 95; // 95vh from the 100vh total (maximum space above for reaching frame 0)
           window.scrollTo({ top: middleScroll, behavior: 'instant' });
 
-          // Set baseline after scrolling to middle
+          // Set baseline after scrolling
           stateRef.current.scrollBaseline = middleScroll;
 
           console.log('📍 Scroll baseline set at Y:', middleScroll, '- Frame:', currentDisplayFrame);
+          console.log('📊 With pixelsPerFrame=0.00625, you can reach frame 0 by scrolling up', Math.round(middleScroll / 0.00625), 'frames');
+          console.log('💡 This means 1 pixel of scroll = 160 frames');
         }, 100);
       }
     };
@@ -349,7 +373,7 @@ const FrameSequence = () => {
       <section
         className={`frame-sequence-section ${isScrollMode ? 'scroll-mode' : ''}`}
         id="frameSection"
-        style={isScrollMode ? { height: '3000vh' } : {}}
+        style={isScrollMode ? { height: '10000vh' } : {}}
       >
         {/* Sticky container for scroll mode */}
         <div className={isScrollMode ? 'sticky-frame-container' : 'frame-container'}>
@@ -359,6 +383,23 @@ const FrameSequence = () => {
             alt="Rotoris world experience"
             className="frame-image"
           />
+          {/* Debug frame counter */}
+          {isScrollMode && (
+            <div id="frame-debug" style={{
+              position: 'fixed',
+              top: '20px',
+              right: '20px',
+              color: 'white',
+              fontSize: '24px',
+              fontWeight: 'bold',
+              background: 'rgba(0,0,0,0.7)',
+              padding: '10px 20px',
+              borderRadius: '8px',
+              zIndex: 9999
+            }}>
+              Frame: 400
+            </div>
+          )}
         </div>
 
         {/* Center Text Overlay - Stays Fixed */}
