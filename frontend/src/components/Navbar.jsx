@@ -27,13 +27,9 @@ const Navbar = () => {
           </svg>
         </button>
 
-        {/* Center: Logo */}
+        {/* Center: Logo Text */}
         <div className="navbar-logo">
-          <img
-            src="/web-loader.mp4"
-            alt="Logo"
-            className="logo-image"
-          />
+          <span className="logo-text">ROTORIS</span>
         </div>
 
         {/* Right: Empty space for balance */}

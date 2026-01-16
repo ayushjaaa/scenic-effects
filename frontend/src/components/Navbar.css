@@ -2,6 +2,15 @@
    NAVBAR COMPONENT STYLES
    ============================================ */
 
+/* Custom Font */
+@font-face {
+  font-family: 'RotorisaSans';
+  src: url('/RotorisSans-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
 .navbar {
   position: fixed;
   top: 0;
@@ -60,6 +69,15 @@
   justify-content: center;
 }
 
+.logo-text {
+  font-size: 2rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  color: white;
+  text-transform: uppercase;
+  font-family: 'RotorisaSans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
 .logo-image {
   height: 40px;
   width: auto;
@@ -82,6 +100,10 @@
     padding: 0 1.5rem;
   }
 
+  .logo-text {
+    font-size: 1.6rem;
+  }
+
   .logo-image {
     height: 35px;
   }
@@ -99,6 +121,11 @@
 
   .navbar-container {
     padding: 0 1rem;
+  }
+
+  .logo-text {
+    font-size: 1.4rem;
+    letter-spacing: 0.1em;
   }
 
   .logo-image {

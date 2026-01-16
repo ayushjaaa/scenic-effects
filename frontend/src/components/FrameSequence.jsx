@@ -9,11 +9,14 @@ const FrameSequence = () => {
   const [showButton, setShowButton] = useState(false);
   const [hideText, setHideText] = useState(false);
   const [isScrollMode, setIsScrollMode] = useState(false);
+  const [showAudioIcon, setShowAudioIcon] = useState(false);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
 
   const imgRef = useRef(null);
   const imagesRef = useRef(new Map());
   const progressAnimationRef = useRef(null);
   const progressStartTimeRef = useRef(null);
+  const audioRef = useRef(null);
   const stateRef = useRef({
     currentFrame: 0,
     targetFrame: 0,
@@ -59,14 +62,6 @@ const FrameSequence = () => {
     if (img && img.complete && imgRef.current) {
       imgRef.current.src = img.src;
       stateRef.current.currentFrame = frameIndex;
-
-      // Show current frame number on screen for debugging
-      if (stateRef.current.isScrollMode) {
-        const debugDiv = document.getElementById('frame-debug');
-        if (debugDiv) {
-          debugDiv.textContent = `Frame: ${Math.round(frameIndex)}`;
-        }
-      }
 
       // Staggered text appearance based on frame progress (only for first 164 frames)
       if (frameIndex < CONFIG.totalFrames) {
@@ -163,9 +158,33 @@ const FrameSequence = () => {
     stateRef.current.targetFrame = scrollProgress * (CONFIG.totalFrames - 1);
   };
 
+  // Toggle audio play/pause
+  const toggleAudio = () => {
+    if (audioRef.current) {
+      if (isAudioPlaying) {
+        audioRef.current.pause();
+        setIsAudioPlaying(false);
+      } else {
+        audioRef.current.play().catch((err) => {
+          console.warn('Audio play failed:', err);
+        });
+        setIsAudioPlaying(true);
+      }
+    }
+  };
+
   // Handle button click
   const handleButtonClick = () => {
     console.log('🎬 Button clicked, starting animation from frame:', stateRef.current.currentFrame);
+
+    // Play audio and show icon
+    if (audioRef.current) {
+      audioRef.current.play().catch((err) => {
+        console.warn('Audio autoplay blocked:', err);
+      });
+      setIsAudioPlaying(true);
+    }
+    setShowAudioIcon(true);
 
     setHideText(true);
     setIsScrollMode(true);
@@ -370,6 +389,13 @@ const FrameSequence = () => {
 
   return (
     <>
+      {/* Hidden Audio Element */}
+      <audio
+        ref={audioRef}
+        src="/experience-sound.mp3"
+        preload="auto"
+      />
+
       {/* Loading Overlay */}
       {isLoading && (
         <div className="frame-loading-overlay">
@@ -413,23 +439,6 @@ const FrameSequence = () => {
             alt="Rotoris world experience"
             className="frame-image"
           />
-          {/* Debug frame counter */}
-          {isScrollMode && (
-            <div id="frame-debug" style={{
-              position: 'fixed',
-              top: '20px',
-              right: '20px',
-              color: 'white',
-              fontSize: '24px',
-              fontWeight: 'bold',
-              background: 'rgba(0,0,0,0.7)',
-              padding: '10px 20px',
-              borderRadius: '8px',
-              zIndex: 9999
-            }}>
-              Frame: 400
-            </div>
-          )}
         </div>
 
         {/* Center Text Overlay - Stays Fixed */}
@@ -438,6 +447,27 @@ const FrameSequence = () => {
             <h2 className={`hero-tagline ${showTagline ? 'visible' : ''}`}>FOR THOSE WHO</h2>
             <h1 className={`hero-title ${showTitle ? 'visible' : ''}`}>BECOME MORE</h1>
             <button className={`hero-button ${showButton ? 'visible' : ''}`} onClick={handleButtonClick}>Enter Experience</button>
+          </div>
+        )}
+
+        {/* Audio Icon - Shows after button click */}
+        {showAudioIcon && (
+          <div className="audio-icon" onClick={toggleAudio} title={isAudioPlaying ? "Mute audio" : "Play audio"}>
+            {isAudioPlaying ? (
+              // Playing - speaker with sound waves
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+              </svg>
+            ) : (
+              // Muted - speaker with X
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <line x1="23" y1="9" x2="17" y2="15" />
+                <line x1="17" y1="9" x2="23" y2="15" />
+              </svg>
+            )}
           </div>
         )}
 
