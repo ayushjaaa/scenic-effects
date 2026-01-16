@@ -11,6 +11,7 @@ const FrameSequence = () => {
   const [isScrollMode, setIsScrollMode] = useState(false);
   const [showAudioIcon, setShowAudioIcon] = useState(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [currentFrameNumber, setCurrentFrameNumber] = useState(0);
 
   const imgRef = useRef(null);
   const imagesRef = useRef(new Map());
@@ -29,6 +30,9 @@ const FrameSequence = () => {
     buttonAnimationTimeout: null,
     lastLogTime: 0,
     framesLoaded: false,
+    isScrolling: false,
+    scrollTimeout: null,
+    lastScrollDirection: 0, // 1 for forward, -1 for backward
   });
 
   const CONFIG = {
@@ -45,6 +49,8 @@ const FrameSequence = () => {
     autoPlayDelay: 500,
     scrollEndFrame: 400,
     pixelsPerFrame: 15, // 15 pixels per frame = ultra slow, cinematic scrolling
+    phase2StartFrame: 164, // Phase 2 starts at frame 165 (index 164)
+    scrollStopDelay: 150, // ms to wait after scroll stops before continuing animation
   };
 
   // Get frame path
@@ -63,6 +69,9 @@ const FrameSequence = () => {
       imgRef.current.src = img.src;
       stateRef.current.currentFrame = frameIndex;
 
+      // Store current frame number for dots
+      setCurrentFrameNumber(frameIndex);
+
       // Staggered text appearance based on frame progress (only for first 164 frames)
       if (frameIndex < CONFIG.totalFrames) {
         const progress = frameIndex / CONFIG.totalFrames;
@@ -80,6 +89,60 @@ const FrameSequence = () => {
         }
       }
     }
+  };
+
+  // Animate to phase boundary when user stops scrolling
+  const animateToPhaseEnd = (direction) => {
+    if (!stateRef.current.isScrollMode) return;
+
+    const currentFrame = Math.round(stateRef.current.currentFrame);
+    let targetBoundary;
+
+    // Determine which boundary to animate to based on direction
+    if (direction > 0) {
+      // Scrolling forward (frames increasing) - go to end of phase (frame 400)
+      targetBoundary = CONFIG.scrollEndFrame;
+    } else {
+      // Scrolling backward (frames decreasing) - go to start of phase 2 (frame 165)
+      targetBoundary = CONFIG.phase2StartFrame + 1; // Frame 165
+    }
+
+    // If already at the boundary, don't animate
+    if (currentFrame === targetBoundary) return;
+
+    console.log(`🎯 Animating from frame ${currentFrame} to phase boundary ${targetBoundary} (direction: ${direction > 0 ? 'forward' : 'backward'})`);
+
+    // Start animation
+    stateRef.current.isAnimatingToEnd = true;
+    const frameDuration = 1000 / CONFIG.autoPlayFPS;
+    let animFrame = currentFrame;
+
+    const animate = () => {
+      if (!stateRef.current.isAnimatingToEnd) {
+        console.log('Phase boundary animation interrupted');
+        return;
+      }
+
+      // Move one frame in the direction
+      if (direction > 0) {
+        animFrame = Math.min(animFrame + 1, targetBoundary);
+      } else {
+        animFrame = Math.max(animFrame - 1, targetBoundary);
+      }
+
+      displayFrame(animFrame);
+      stateRef.current.targetFrame = animFrame;
+
+      // Continue until we reach the boundary
+      if (animFrame !== targetBoundary) {
+        stateRef.current.buttonAnimationTimeout = setTimeout(animate, frameDuration);
+      } else {
+        console.log(`✅ Reached phase boundary at frame ${targetBoundary}`);
+        stateRef.current.isAnimatingToEnd = false;
+      }
+    };
+
+    animate();
   };
 
   // Handle scroll
@@ -132,7 +195,31 @@ const FrameSequence = () => {
       const targetFrame = stateRef.current.scrollStartFrame + frameDelta;
       const clampedFrame = Math.max(0, Math.min(CONFIG.scrollEndFrame, targetFrame));
 
+      // Detect scroll direction
+      const direction = clampedFrame - stateRef.current.targetFrame;
+      if (Math.abs(direction) > 0.1) {
+        stateRef.current.lastScrollDirection = direction > 0 ? 1 : -1;
+      }
+
       stateRef.current.targetFrame = clampedFrame;
+      stateRef.current.isScrolling = true;
+
+      // Clear existing timeout
+      if (stateRef.current.scrollTimeout) {
+        clearTimeout(stateRef.current.scrollTimeout);
+      }
+
+      // Set new timeout to detect when scrolling stops
+      stateRef.current.scrollTimeout = setTimeout(() => {
+        stateRef.current.isScrolling = false;
+
+        // Only animate to phase boundary if we're in phase 2 and not at the boundaries
+        const currentFrame = Math.round(stateRef.current.currentFrame);
+        if (currentFrame > CONFIG.phase2StartFrame && currentFrame < CONFIG.scrollEndFrame) {
+          console.log('📍 Scroll stopped at frame:', currentFrame);
+          animateToPhaseEnd(stateRef.current.lastScrollDirection);
+        }
+      }, CONFIG.scrollStopDelay);
 
       // Debug logging - throttled
       if (!stateRef.current.lastLogTime || Date.now() - stateRef.current.lastLogTime > 100) {
@@ -383,6 +470,16 @@ const FrameSequence = () => {
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
+
+      // Clean up scroll timeout
+      if (stateRef.current.scrollTimeout) {
+        clearTimeout(stateRef.current.scrollTimeout);
+      }
+
+      // Clean up button animation timeout
+      if (stateRef.current.buttonAnimationTimeout) {
+        clearTimeout(stateRef.current.buttonAnimationTimeout);
+      }
     };
   }, []);
 
@@ -468,6 +565,32 @@ const FrameSequence = () => {
                 <line x1="17" y1="9" x2="23" y2="15" />
               </svg>
             )}
+          </div>
+        )}
+
+        {/* Navigation Dots - Right Side */}
+        {!isLoading && (
+          <div className="nav-dots">
+            {/* Dot 1: Frames 1-165 */}
+            <div
+              id="phase-dot-1"
+              className="nav-dot"
+              style={{
+                height: currentFrameNumber >= 1 && currentFrameNumber <= 165
+                  ? `${8 + ((currentFrameNumber - 1) / 164) * 32}px`
+                  : currentFrameNumber > 165 ? '8px' : '8px'
+              }}
+            />
+            {/* Dot 2: Frames 165-400 */}
+            <div
+              id="phase-dot-2"
+              className="nav-dot"
+              style={{
+                height: currentFrameNumber >= 165 && currentFrameNumber <= 400
+                  ? `${8 + ((currentFrameNumber - 165) / 235) * 32}px`
+                  : '8px'
+              }}
+            />
           </div>
         )}
 
