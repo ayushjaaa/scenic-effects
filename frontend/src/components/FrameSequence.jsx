@@ -2,277 +2,317 @@ import { useEffect, useRef, useState } from 'react';
 import './FrameSequence.css';
 
 const FrameSequence = () => {
+  // ============================================================
+  // STATE - What the UI needs to know
+  // ============================================================
   const [loadingPercent, setLoadingPercent] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [showTagline, setShowTagline] = useState(false);
-  const [showTitle, setShowTitle] = useState(false);
+  const [currentPhase, setCurrentPhase] = useState('loading'); // 'loading', 'autoplay', 'paused', 'scroll-exploration'
   const [showButton, setShowButton] = useState(false);
-  const [hideText, setHideText] = useState(false);
-  const [isScrollMode, setIsScrollMode] = useState(false);
   const [showAudioIcon, setShowAudioIcon] = useState(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [currentFrameNumber, setCurrentFrameNumber] = useState(0);
 
+  // ============================================================
+  // REFS - Persistent data that doesn't trigger re-renders
+  // ============================================================
   const imgRef = useRef(null);
   const imagesRef = useRef(new Map());
+  const audioRef = useRef(null);
   const progressAnimationRef = useRef(null);
   const progressStartTimeRef = useRef(null);
-  const audioRef = useRef(null);
+
+  // Core state machine
   const stateRef = useRef({
     currentFrame: 0,
     targetFrame: 0,
     isReady: false,
     animationFrameId: null,
-    isScrollMode: false,
-    scrollStartFrame: 163,
-    scrollBaseline: 0,
-    isAnimatingToEnd: false,
-    buttonAnimationTimeout: null,
-    lastLogTime: 0,
-    framesLoaded: false,
+    autoPlayTimeoutId: null,
+    scrollBaseline: 0, // The scroll position where frame 0 starts
+    lastScrollDirection: 1, // 1 for forward, -1 for backward
+    currentPhase: 'loading', // Track phase in ref to avoid closure issues
     isScrolling: false,
     scrollTimeout: null,
-    lastScrollDirection: 0, // 1 for forward, -1 for backward
+    boundaryAnimationTimeout: null,
   });
 
+  // ============================================================
+  // CONFIG - The rules of the experience
+  // ============================================================
   const CONFIG = {
+    // Frame assets
     imageBaseURL: '/Rotoris_world_experience_',
     imageFormat: 'avif.jpeg',
-    totalFrames: 164,
-    maxFrames: 401,
-    startFrame: 0,
     paddingZeros: 5,
-    scrollMultiplier: 1.5,
-    smoothing: 0.1,
-    autoPlayOnLoad: true,
+
+    // Frame ranges - THE TIMELINE
+    totalFrames: 401, // 0-400 (401 frames total)
+    autoplayEndFrame: 164, // Phase A: frames 0-164 (autoplay)
+    pauseFrame: 164, // Phase B: pause at 164, button appears
+    scrollStartFrame: 0, // Phase C: scroll starts at 0 (can go back to beginning)
+    scrollEndFrame: 400, // Phase C: scroll ends at 400
+
+    // Timing
     autoPlayFPS: 24,
-    autoPlayDelay: 500,
-    scrollEndFrame: 400,
-    pixelsPerFrame: 15, // 15 pixels per frame = ultra slow, cinematic scrolling
-    phase2StartFrame: 164, // Phase 2 starts at frame 165 (index 164)
-    scrollStopDelay: 150, // ms to wait after scroll stops before continuing animation
+    autoPlayDelay: 500, // Delay before autoplay starts
+    smoothing: 0.15, // Frame interpolation smoothing
+
+    // Scroll mapping
+    pixelsPerFrame: 15, // How many pixels of scroll = 1 frame (slower = more pixels)
   };
 
-  // Get frame path
+  // ============================================================
+  // HELPERS - Pure functions
+  // ============================================================
   const getFramePath = (frameNumber) => {
     const paddedNumber = String(frameNumber).padStart(CONFIG.paddingZeros, '0');
     return `${CONFIG.imageBaseURL}${paddedNumber}.${CONFIG.imageFormat}`;
   };
 
-  // Display frame
+  // ============================================================
+  // FRAME RENDERING - The only thing that changes the visual
+  // ============================================================
   const displayFrame = (frameIndex) => {
-    frameIndex = Math.max(0, Math.min(CONFIG.maxFrames - 1, Math.floor(frameIndex)));
+    // Clamp frame to valid range
+    frameIndex = Math.max(0, Math.min(CONFIG.totalFrames - 1, Math.floor(frameIndex)));
 
     const img = imagesRef.current.get(frameIndex);
 
     if (img && img.complete && imgRef.current) {
       imgRef.current.src = img.src;
       stateRef.current.currentFrame = frameIndex;
-
-      // Store current frame number for dots
       setCurrentFrameNumber(frameIndex);
 
-      // Staggered text appearance based on frame progress (only for first 164 frames)
-      if (frameIndex < CONFIG.totalFrames) {
-        const progress = frameIndex / CONFIG.totalFrames;
-
-        if (progress >= 0.5 && !showTagline) {
-          setShowTagline(true);
-        }
-
-        if (progress >= 0.52 && !showTitle) {
-          setShowTitle(true);
-        }
-
-        if (progress >= 0.98 && !showButton) {
-          setShowButton(true);
-        }
+      // Show button when we reach the pause frame during autoplay
+      if (frameIndex >= CONFIG.pauseFrame && stateRef.current.currentPhase === 'autoplay' && !showButton) {
+        setShowButton(true);
       }
     }
   };
 
-  // Animate to phase boundary when user stops scrolling
-  const animateToPhaseEnd = (direction) => {
-    if (!stateRef.current.isScrollMode) return;
+  // ============================================================
+  // PHASE A - AUTOPLAY (frames 0 → 164)
+  // Time controls frames
+  // ============================================================
+  const startAutoplay = () => {
+    console.log('🎬 Phase A: Starting autoplay (frames 0 → 164)');
+    setCurrentPhase('autoplay');
+    stateRef.current.currentPhase = 'autoplay';
 
+    let currentAutoFrame = 0;
+    const frameDelay = 1000 / CONFIG.autoPlayFPS;
+    let lastFrameTime = 0;
+
+    const animate = (currentTime) => {
+      // Stop if phase changed or reached end
+      if (stateRef.current.currentPhase !== 'autoplay' && stateRef.current.currentPhase !== 'loading') return;
+      if (currentAutoFrame > CONFIG.autoplayEndFrame) {
+        console.log('✅ Phase A complete: Autoplay finished at frame', CONFIG.autoplayEndFrame);
+        setCurrentPhase('paused'); // Move to Phase B
+        stateRef.current.currentPhase = 'paused';
+        return;
+      }
+
+      if (currentTime - lastFrameTime >= frameDelay) {
+        displayFrame(currentAutoFrame);
+        stateRef.current.targetFrame = currentAutoFrame;
+        currentAutoFrame++;
+        lastFrameTime = currentTime;
+      }
+
+      stateRef.current.autoPlayTimeoutId = requestAnimationFrame(animate);
+    };
+
+    stateRef.current.autoPlayTimeoutId = requestAnimationFrame(animate);
+  };
+
+  // ============================================================
+  // PHASE B - PAUSE + CTA (frame ~164)
+  // Frame frozen, button visible, waiting for user action
+  // ============================================================
+  // This phase is passive - it just waits for button click
+  // The button is shown by the autoplay logic when it reaches frame 164
+
+  // ============================================================
+  // BOUNDARY ANIMATION - Snap to nearest boundary when scroll stops
+  // ============================================================
+  const animateToBoundary = (direction) => {
     const currentFrame = Math.round(stateRef.current.currentFrame);
-    let targetBoundary;
 
-    // Determine which boundary to animate to based on direction
-    if (direction > 0) {
-      // Scrolling forward (frames increasing) - go to end of phase (frame 400)
-      targetBoundary = CONFIG.scrollEndFrame;
-    } else {
-      // Scrolling backward (frames decreasing) - go to start of phase 2 (frame 165)
-      targetBoundary = CONFIG.phase2StartFrame + 1; // Frame 165
+    // Only animate to boundary if we're in the "experience zone" (frames 165-400)
+    // Frames 0-164 can be freely scrolled without auto-animation
+    if (currentFrame <= CONFIG.autoplayEndFrame) {
+      console.log('📍 In free scroll zone (0-164), no boundary animation');
+      return;
     }
 
-    // If already at the boundary, don't animate
-    if (currentFrame === targetBoundary) return;
+    // We're in frames 165-400, determine target boundary
+    let targetBoundary;
+    if (direction < 0) {
+      // Scrolling backward (up) → go to frame 165
+      targetBoundary = CONFIG.autoplayEndFrame + 1; // Frame 165
+    } else {
+      // Scrolling forward (down) → go to frame 400
+      targetBoundary = CONFIG.scrollEndFrame; // Frame 400
+    }
 
-    console.log(`🎯 Animating from frame ${currentFrame} to phase boundary ${targetBoundary} (direction: ${direction > 0 ? 'forward' : 'backward'})`);
+    // If already at boundary, don't animate
+    if (currentFrame === targetBoundary) {
+      console.log('📍 Already at boundary:', targetBoundary);
+      return;
+    }
 
-    // Start animation
-    stateRef.current.isAnimatingToEnd = true;
+    console.log(`🎯 Animating from frame ${currentFrame} to boundary ${targetBoundary} (direction: ${direction < 0 ? 'backward' : 'forward'})`);
+
     const frameDuration = 1000 / CONFIG.autoPlayFPS;
     let animFrame = currentFrame;
 
     const animate = () => {
-      if (!stateRef.current.isAnimatingToEnd) {
-        console.log('Phase boundary animation interrupted');
+      // Stop if user starts scrolling again
+      if (stateRef.current.isScrolling) {
+        console.log('⚠️ Boundary animation interrupted by scroll');
         return;
       }
 
-      // Move one frame in the direction
-      if (direction > 0) {
-        animFrame = Math.min(animFrame + 1, targetBoundary);
-      } else {
+      // Move one frame toward boundary
+      if (direction < 0) {
         animFrame = Math.max(animFrame - 1, targetBoundary);
+      } else {
+        animFrame = Math.min(animFrame + 1, targetBoundary);
       }
 
       displayFrame(animFrame);
       stateRef.current.targetFrame = animFrame;
 
-      // Continue until we reach the boundary
+      // Continue until we reach boundary
       if (animFrame !== targetBoundary) {
-        stateRef.current.buttonAnimationTimeout = setTimeout(animate, frameDuration);
+        stateRef.current.boundaryAnimationTimeout = setTimeout(animate, frameDuration);
       } else {
-        console.log(`✅ Reached phase boundary at frame ${targetBoundary}`);
-        stateRef.current.isAnimatingToEnd = false;
+        console.log(`✅ Reached boundary at frame ${targetBoundary}`);
       }
     };
 
     animate();
   };
 
-  // Handle scroll
-  const handleScroll = () => {
-    if (!stateRef.current.isReady) return;
+  // ============================================================
+  // PHASE C - SCROLL-CONTROLLED EXPERIENCE (frames 164 → 400)
+  // Scroll controls frames
+  // ============================================================
+  const enterScrollMode = () => {
+    console.log('🎬 Phase C: Entering scroll-controlled timeline');
 
+    // Stop any autoplay
+    if (stateRef.current.autoPlayTimeoutId) {
+      cancelAnimationFrame(stateRef.current.autoPlayTimeoutId);
+      stateRef.current.autoPlayTimeoutId = null;
+    }
+
+    setCurrentPhase('scroll-exploration');
+    stateRef.current.currentPhase = 'scroll-exploration';
+
+    // Calculate fake scroll space for FULL range (0-400)
+    const scrollRange = CONFIG.scrollEndFrame - CONFIG.scrollStartFrame; // 400 - 0 = 400 frames
+    const totalScrollSpace = scrollRange * CONFIG.pixelsPerFrame; // 400 * 15 = 6000px
+    const viewportHeight = window.innerHeight;
+    const bufferSpace = viewportHeight * 2; // 2 viewports of buffer space at top
+    const requiredHeight = bufferSpace + totalScrollSpace + viewportHeight; // Buffer + scroll space + viewport
+
+    // Create/update the scroll container
     const section = document.getElementById('frameSection');
-    if (!section) return;
+    if (section) {
+      section.style.height = `${requiredHeight}px`;
+      section.classList.add('scroll-mode');
 
-    // If animating after button click, user scroll interrupts it
-    if (stateRef.current.isAnimatingToEnd) {
-      if (stateRef.current.buttonAnimationTimeout) {
-        clearTimeout(stateRef.current.buttonAnimationTimeout);
-        stateRef.current.buttonAnimationTimeout = null;
-      }
-      stateRef.current.isAnimatingToEnd = false;
-
-      const currentDisplayFrame = stateRef.current.currentFrame;
-
-      // CRITICAL: Ensure section has scroll-mode height BEFORE scrolling
-      setIsScrollMode(true);
-
-      // Calculate required height and scroll position for bidirectional scrolling
-      // Strategy: Add extra space ABOVE and BELOW the actual scroll range
-      const totalScrollSpace = CONFIG.scrollEndFrame * CONFIG.pixelsPerFrame; // 400 * 15 = 6000px
-      const viewportHeight = window.innerHeight;
-      const bufferSpace = viewportHeight * 5; // 5 viewports of buffer on each side
-      const requiredHeight = bufferSpace + totalScrollSpace + viewportHeight; // Buffer + scroll space + viewport
-
-      if (section) {
-        section.classList.add('scroll-mode');
-        section.style.height = `${requiredHeight}px`;
-        section.style.pointerEvents = 'auto';
-        // Force reflow to ensure height is applied immediately
-        section.offsetHeight;
-      }
-
-      // Calculate scroll position for current frame
-      // Add buffer space so frame 0 starts AFTER the buffer, giving space to scroll up
-      // Frame 0 = bufferSpace, Frame 400 = bufferSpace + 6000px
-      const scrollPosition = bufferSpace + (currentDisplayFrame * CONFIG.pixelsPerFrame);
-
-      // Set proper baseline and scroll mode - baseline is at the buffer position (where frame 0 is)
-      stateRef.current.scrollStartFrame = 0; // Frame 0 at baseline
-      stateRef.current.scrollBaseline = bufferSpace; // Frame 0 starts after buffer
-      stateRef.current.targetFrame = currentDisplayFrame;
-
-      // Scroll to calculated position instantly
-      window.scrollTo({ top: scrollPosition, behavior: 'instant' });
-
-      // Wait for browser to process scroll position, then enable scroll mode
-      setTimeout(() => {
-        stateRef.current.isScrollMode = true;
-        stateRef.current.isScrolling = false; // Reset scrolling flag to prevent auto-animation
-        console.log('⚡ Animation interrupted at frame:', currentDisplayFrame);
-        console.log('📍 Scroll positioned at:', scrollPosition, 'px');
-        console.log('📍 Frame 0 at:', bufferSpace, 'px, Frame 400 at:', bufferSpace + 6000, 'px');
-        console.log('📍 Buffer space:', bufferSpace, 'px');
-        console.log('📍 Actual browser scrollY:', window.scrollY);
-        console.log('🎯 Scroll mode enabled - can now scroll in both directions');
-      }, 50);
+      // Force reflow
+      section.offsetHeight;
     }
 
-    // If in scroll mode (after button click)
-    if (stateRef.current.isScrollMode) {
-      const scrollY = window.scrollY;
-      const scrollDelta = scrollY - stateRef.current.scrollBaseline;
-      const frameDelta = scrollDelta / CONFIG.pixelsPerFrame;
+    // Calculate where current frame should be in scroll space
+    // Frame 0 starts at bufferSpace position
+    const currentFrame = stateRef.current.currentFrame;
+    const frameOffsetFromStart = currentFrame - CONFIG.scrollStartFrame; // How many frames from start (0)
+    const scrollPosition = bufferSpace + (frameOffsetFromStart * CONFIG.pixelsPerFrame);
 
-      // Calculate target frame from baseline (frame 400 at baseline)
-      // When scrolling up (negative delta), frames should decrease
-      // When scrolling down (positive delta), frames should increase
-      const targetFrame = stateRef.current.scrollStartFrame + frameDelta;
-      const clampedFrame = Math.max(0, Math.min(CONFIG.scrollEndFrame, targetFrame));
+    // Set baseline: this is where frame 0 begins
+    stateRef.current.scrollBaseline = bufferSpace;
 
-      // Detect scroll direction
-      const direction = clampedFrame - stateRef.current.targetFrame;
-      if (Math.abs(direction) > 0.1) {
-        stateRef.current.lastScrollDirection = direction > 0 ? 1 : -1;
-      }
+    console.log('📍 Scroll setup:', {
+      requiredHeight,
+      bufferSpace,
+      scrollRange,
+      totalScrollSpace,
+      currentFrame,
+      scrollPosition,
+      baseline: stateRef.current.scrollBaseline
+    });
 
-      stateRef.current.targetFrame = clampedFrame;
-      stateRef.current.isScrolling = true;
+    // Scroll to position instantly
+    window.scrollTo({ top: scrollPosition, behavior: 'instant' });
 
-      // Clear existing timeout
-      if (stateRef.current.scrollTimeout) {
-        clearTimeout(stateRef.current.scrollTimeout);
-      }
-
-      // Set new timeout to detect when scrolling stops
-      stateRef.current.scrollTimeout = setTimeout(() => {
-        stateRef.current.isScrolling = false;
-
-        // Only animate to phase boundary if we're in phase 2 and not at the boundaries
-        const currentFrame = Math.round(stateRef.current.currentFrame);
-        if (currentFrame > CONFIG.phase2StartFrame && currentFrame < CONFIG.scrollEndFrame) {
-          console.log('📍 Scroll stopped at frame:', currentFrame);
-          animateToPhaseEnd(stateRef.current.lastScrollDirection);
-        }
-      }, CONFIG.scrollStopDelay);
-
-      // Debug logging - throttled
-      if (!stateRef.current.lastLogTime || Date.now() - stateRef.current.lastLogTime > 500) {
-        console.log('🔄 Scroll Debug:', {
-          scrollY: Math.round(scrollY),
-          baseline: Math.round(stateRef.current.scrollBaseline),
-          scrollDelta: Math.round(scrollDelta),
-          frameDelta: Math.round(frameDelta * 10) / 10,
-          startFrame: stateRef.current.scrollStartFrame,
-          targetFrame: Math.round(clampedFrame),
-          currentFrame: Math.round(stateRef.current.currentFrame),
-          direction: stateRef.current.lastScrollDirection === 1 ? 'forward' : 'backward'
-        });
-        stateRef.current.lastLogTime = Date.now();
-      }
-
-      return;
-    }
-
-    // Original scroll behavior (before button click) - Phase 1 (frames 0-163)
-    // This allows bidirectional scrolling during autoplay phase
-    const rect = section.getBoundingClientRect();
-    const scrollStart = -rect.top;
-    const scrollEnd = rect.height - window.innerHeight;
-    const scrollProgress = Math.max(0, Math.min(1, scrollStart / scrollEnd));
-
-    stateRef.current.targetFrame = scrollProgress * (CONFIG.totalFrames - 1);
+    console.log('🎯 Phase C active: Scroll now controls frames 0 → 400 (full bidirectional range)');
   };
 
-  // Toggle audio play/pause
+  // ============================================================
+  // SCROLL HANDLER - Maps scroll distance to frame number
+  // ============================================================
+  const handleScroll = () => {
+    if (!stateRef.current.isReady) return;
+    if (stateRef.current.currentPhase !== 'scroll-exploration') return;
+
+    const scrollY = window.scrollY;
+
+    // Calculate scroll distance from baseline (where frame 164 starts)
+    const scrollDelta = scrollY - stateRef.current.scrollBaseline;
+
+    // Convert scroll distance to frame offset
+    const frameOffset = scrollDelta / CONFIG.pixelsPerFrame;
+
+    // Target frame = start frame + offset
+    const targetFrame = CONFIG.scrollStartFrame + frameOffset;
+
+    // Clamp to valid range
+    const clampedFrame = Math.max(
+      CONFIG.scrollStartFrame,
+      Math.min(CONFIG.scrollEndFrame, targetFrame)
+    );
+
+    // Track scroll direction
+    const direction = clampedFrame - stateRef.current.targetFrame;
+    if (Math.abs(direction) > 0.1) {
+      stateRef.current.lastScrollDirection = direction > 0 ? 1 : -1;
+    }
+
+    // Update target - smooth render loop will handle the actual display
+    stateRef.current.targetFrame = clampedFrame;
+  };
+
+  // ============================================================
+  // BUTTON CLICK - Transition from Phase B to Phase C
+  // ============================================================
+  const handleButtonClick = () => {
+    console.log('🎯 Button clicked: Entering scroll mode immediately');
+
+    // Hide button and show audio icon
+    setShowButton(false);
+    setShowAudioIcon(true);
+
+    // Play audio
+    if (audioRef.current) {
+      audioRef.current.play().catch((err) => {
+        console.warn('Audio autoplay blocked:', err);
+      });
+      setIsAudioPlaying(true);
+    }
+
+    // Enter scroll mode immediately at current frame (164)
+    enterScrollMode();
+  };
+
+  // ============================================================
+  // AUDIO CONTROL
+  // ============================================================
   const toggleAudio = () => {
     if (audioRef.current) {
       if (isAudioPlaying) {
@@ -287,101 +327,9 @@ const FrameSequence = () => {
     }
   };
 
-  // Handle button click
-  const handleButtonClick = () => {
-    console.log('🎬 Button clicked, starting animation from frame:', stateRef.current.currentFrame);
-
-    // Play audio and show icon
-    if (audioRef.current) {
-      audioRef.current.play().catch((err) => {
-        console.warn('Audio autoplay blocked:', err);
-      });
-      setIsAudioPlaying(true);
-    }
-    setShowAudioIcon(true);
-
-    setHideText(true);
-    setIsScrollMode(true);
-    stateRef.current.isAnimatingToEnd = true;
-
-    const startFrame = stateRef.current.currentFrame;
-    const endFrame = CONFIG.scrollEndFrame;
-    const frameDuration = 1000 / CONFIG.autoPlayFPS;
-    let currentAnimFrame = startFrame;
-
-    const animateToEnd = () => {
-      if (!stateRef.current.isAnimatingToEnd) {
-        console.log('Animation was interrupted');
-        return;
-      }
-
-      if (currentAnimFrame < endFrame) {
-        currentAnimFrame++;
-        displayFrame(currentAnimFrame);
-        stateRef.current.targetFrame = currentAnimFrame;
-
-        if (currentAnimFrame % 50 === 0) {
-          console.log('Animation progress:', currentAnimFrame, '/', endFrame);
-        }
-
-        stateRef.current.buttonAnimationTimeout = setTimeout(animateToEnd, frameDuration);
-      } else {
-        console.log('✅ Animation complete at frame:', currentAnimFrame);
-        console.log('🖱️ Switching to scroll mode (frames 0-400)...');
-
-        stateRef.current.isAnimatingToEnd = false;
-
-        // Enable scroll mode state
-        setIsScrollMode(true);
-
-        // Calculate required height and scroll position for bidirectional scrolling
-        // Strategy: Add extra space ABOVE and BELOW the actual scroll range
-        const totalScrollSpace = CONFIG.scrollEndFrame * CONFIG.pixelsPerFrame; // 400 * 15 = 6000px
-        const viewportHeight = window.innerHeight;
-        const bufferSpace = viewportHeight * 5; // 5 viewports of buffer on each side
-        const requiredHeight = bufferSpace + totalScrollSpace + viewportHeight; // Buffer + scroll space + viewport
-
-        // Get section and ensure it has scroll-mode height BEFORE scrolling
-        const section = document.getElementById('frameSection');
-        if (section) {
-          section.classList.add('scroll-mode');
-          section.style.height = `${requiredHeight}px`;
-          section.style.pointerEvents = 'auto';
-          // Force reflow to ensure height is applied immediately
-          section.offsetHeight;
-        }
-
-        // Calculate scroll position for frame 400
-        // Add buffer space so frame 0 starts AFTER the buffer, giving space to scroll up
-        // Frame 400 = bufferSpace + 6000px
-        const currentFrame = 400;
-        const scrollPosition = bufferSpace + (currentFrame * CONFIG.pixelsPerFrame);
-
-        // Set proper baseline and scroll mode - baseline is at the buffer position (where frame 0 is)
-        stateRef.current.scrollStartFrame = 0; // Frame 0 at baseline
-        stateRef.current.scrollBaseline = bufferSpace; // Frame 0 starts after buffer
-        stateRef.current.targetFrame = currentFrame;
-
-        // Scroll to calculated position instantly
-        window.scrollTo({ top: scrollPosition, behavior: 'instant' });
-
-        // Wait for browser to process scroll position, then enable scroll mode
-        setTimeout(() => {
-          stateRef.current.isScrollMode = true;
-          stateRef.current.isScrolling = false; // Reset scrolling flag to prevent auto-animation
-          console.log('📍 Scroll positioned at:', scrollPosition, 'px');
-          console.log('📍 Frame 0 at:', bufferSpace, 'px, Frame 400 at:', bufferSpace + 6000, 'px');
-          console.log('📍 Buffer space:', bufferSpace, 'px');
-          console.log('📍 Actual browser scrollY:', window.scrollY);
-          console.log('🎯 Scroll mode enabled - can now scroll in both directions');
-        }, 50);
-      }
-    };
-
-    animateToEnd();
-  };
-
-  // Smooth render loop
+  // ============================================================
+  // SMOOTH RENDER LOOP - Interpolates between current and target
+  // ============================================================
   useEffect(() => {
     const render = () => {
       const diff = stateRef.current.targetFrame - stateRef.current.currentFrame;
@@ -405,35 +353,9 @@ const FrameSequence = () => {
     };
   }, [isLoading]);
 
-  // Auto-play
-  const autoPlay = () => {
-    let currentAutoFrame = 0;
-    const frameDelay = 1000 / CONFIG.autoPlayFPS;
-    let lastFrameTime = 0;
-
-    const animate = (currentTime) => {
-      if (currentTime - lastFrameTime >= frameDelay) {
-        if (currentAutoFrame >= CONFIG.totalFrames) {
-          // Autoplay complete - enable bidirectional scrolling for Phase 1
-          console.log('✅ Autoplay complete at frame', currentAutoFrame - 1);
-          return;
-        }
-
-        displayFrame(currentAutoFrame);
-        stateRef.current.targetFrame = currentAutoFrame;
-        currentAutoFrame++;
-        lastFrameTime = currentTime;
-      }
-
-      if (currentAutoFrame < CONFIG.totalFrames) {
-        requestAnimationFrame(animate);
-      }
-    };
-
-    requestAnimationFrame(animate);
-  };
-
-  // Animate progress bar from 0 to 100% over fixed duration
+  // ============================================================
+  // LOADING PROGRESS ANIMATION
+  // ============================================================
   useEffect(() => {
     const loadingDuration = 4000; // 4 seconds
 
@@ -451,7 +373,7 @@ const FrameSequence = () => {
       if (progress < 1) {
         progressAnimationRef.current = requestAnimationFrame(animateProgress);
       } else {
-        // Progress complete - hide loading screen
+        // Progress complete
         setTimeout(() => {
           setIsLoading(false);
         }, 300);
@@ -467,45 +389,44 @@ const FrameSequence = () => {
     };
   }, []);
 
-  // Preload images
+  // ============================================================
+  // IMAGE PRELOADING & SETUP
+  // ============================================================
   useEffect(() => {
     let loadedCount = 0;
 
     const loadImages = async () => {
-      for (let i = 0; i < CONFIG.maxFrames; i++) {
-        const frameNumber = CONFIG.startFrame + i;
+      console.log(`📦 Preloading ${CONFIG.totalFrames} frames...`);
+
+      for (let i = 0; i < CONFIG.totalFrames; i++) {
         const img = new Image();
 
         img.onload = () => {
           loadedCount++;
 
+          // Display first frame immediately
           if (loadedCount === 1 && imgRef.current) {
             imgRef.current.src = img.src;
           }
 
-          if (loadedCount === CONFIG.totalFrames) {
-            stateRef.current.framesLoaded = true;
+          // When enough frames loaded, start experience
+          if (loadedCount === CONFIG.autoplayEndFrame + 1) { // Load frames 0-164
+            console.log('✅ Initial frames loaded, ready to start');
             stateRef.current.isReady = true;
 
-            if (CONFIG.autoPlayOnLoad) {
-              setTimeout(() => {
-                autoPlay();
-              }, CONFIG.autoPlayDelay);
-            }
+            // Start autoplay after delay
+            setTimeout(() => {
+              startAutoplay();
+            }, CONFIG.autoPlayDelay);
           }
         };
 
         img.onerror = () => {
-          console.warn(`Failed to load: ${getFramePath(frameNumber)}`);
+          console.warn(`Failed to load: ${getFramePath(i)}`);
           loadedCount++;
-
-          if (loadedCount === CONFIG.totalFrames) {
-            stateRef.current.framesLoaded = true;
-            stateRef.current.isReady = true;
-          }
         };
 
-        img.src = getFramePath(frameNumber);
+        img.src = getFramePath(i);
         imagesRef.current.set(i, img);
       }
     };
@@ -514,24 +435,19 @@ const FrameSequence = () => {
 
     // Setup scroll listener
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
 
-      // Clean up scroll timeout
-      if (stateRef.current.scrollTimeout) {
-        clearTimeout(stateRef.current.scrollTimeout);
-      }
-
-      // Clean up button animation timeout
-      if (stateRef.current.buttonAnimationTimeout) {
-        clearTimeout(stateRef.current.buttonAnimationTimeout);
+      if (stateRef.current.autoPlayTimeoutId) {
+        cancelAnimationFrame(stateRef.current.autoPlayTimeoutId);
       }
     };
   }, []);
 
-
+  // ============================================================
+  // RENDER
+  // ============================================================
   return (
     <>
       {/* Hidden Audio Element */}
@@ -539,12 +455,12 @@ const FrameSequence = () => {
         ref={audioRef}
         src="/experience-sound.mp3"
         preload="auto"
+        loop
       />
 
       {/* Loading Overlay */}
       {isLoading && (
         <div className="frame-loading-overlay">
-          {/* Video */}
           <video
             className="frame-loading-video"
             src="/web-loader.mp4"
@@ -555,7 +471,6 @@ const FrameSequence = () => {
             preload="auto"
           />
 
-          {/* Progress Bar */}
           <div className="frame-loading-progress">
             <div
               className="frame-loading-bar"
@@ -563,23 +478,19 @@ const FrameSequence = () => {
             />
           </div>
 
-          {/* Percentage Counter */}
           <div className="frame-loading-percentage">
             {loadingPercent}%
           </div>
         </div>
       )}
 
-      {/* Frame Sequence Section */}
+      {/* Frame Sequence Section - The Pinned Stage */}
       <section
-        className={`frame-sequence-section ${isScrollMode ? 'scroll-mode' : ''}`}
+        className={`frame-sequence-section ${currentPhase === 'scroll-exploration' ? 'scroll-mode' : ''}`}
         id="frameSection"
-        style={isScrollMode ? {
-          height: `${(window.innerHeight * 5) + (CONFIG.scrollEndFrame * CONFIG.pixelsPerFrame) + window.innerHeight}px`
-        } : {}}
       >
-        {/* Sticky container for scroll mode */}
-        <div className={isScrollMode ? 'sticky-frame-container' : 'frame-container'}>
+        {/* The canvas - either normal or sticky */}
+        <div className={currentPhase === 'scroll-exploration' ? 'sticky-frame-container' : 'frame-container'}>
           <img
             ref={imgRef}
             id="currentFrame"
@@ -588,27 +499,32 @@ const FrameSequence = () => {
           />
         </div>
 
-        {/* Center Text Overlay - Stays Fixed */}
-        {!hideText && (
+        {/* Hero Content - Phase A & B */}
+        {(currentPhase === 'autoplay' || currentPhase === 'paused') && (
           <div className="hero-content">
-            <h2 className={`hero-tagline ${showTagline ? 'visible' : ''}`}>FOR THOSE WHO</h2>
-            <h1 className={`hero-title ${showTitle ? 'visible' : ''}`}>BECOME MORE</h1>
-            <button className={`hero-button ${showButton ? 'visible' : ''}`} onClick={handleButtonClick}>Enter Experience</button>
+            <h2 className="hero-tagline visible">FOR THOSE WHO</h2>
+            <h1 className="hero-title visible">BECOME MORE</h1>
+            {showButton && (
+              <button
+                className="hero-button visible"
+                onClick={handleButtonClick}
+              >
+                Enter Experience
+              </button>
+            )}
           </div>
         )}
 
-        {/* Audio Icon - Shows after button click */}
+        {/* Audio Icon - Phase C */}
         {showAudioIcon && (
           <div className="audio-icon" onClick={toggleAudio} title={isAudioPlaying ? "Mute audio" : "Play audio"}>
             {isAudioPlaying ? (
-              // Playing - speaker with sound waves
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
                 <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
                 <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
               </svg>
             ) : (
-              // Muted - speaker with X
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
                 <line x1="23" y1="9" x2="17" y2="15" />
@@ -618,32 +534,31 @@ const FrameSequence = () => {
           </div>
         )}
 
-        {/* Navigation Dots - Right Side */}
+        {/* Navigation Dots */}
         {!isLoading && (
           <div className="nav-dots">
-            {/* Dot 1: Frames 1-165 */}
+            {/* Dot 1: Phase A+B (Frames 0-164) */}
             <div
-              id="phase-dot-1"
               className="nav-dot"
               style={{
-                height: currentFrameNumber >= 1 && currentFrameNumber <= 165
-                  ? `${8 + ((currentFrameNumber - 1) / 164) * 32}px`
-                  : currentFrameNumber > 165 ? '8px' : '8px'
+                height: currentFrameNumber >= 0 && currentFrameNumber <= 164
+                  ? `${8 + (currentFrameNumber / 164) * 32}px`
+                  : currentFrameNumber > 164 ? '40px' : '8px',
+                background: currentFrameNumber <= 164 ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.3)'
               }}
             />
-            {/* Dot 2: Frames 165-400 */}
+            {/* Dot 2: Phase C (Frames 165-400) */}
             <div
-              id="phase-dot-2"
               className="nav-dot"
               style={{
                 height: currentFrameNumber >= 165 && currentFrameNumber <= 400
                   ? `${8 + ((currentFrameNumber - 165) / 235) * 32}px`
-                  : '8px'
+                  : '8px',
+                background: currentFrameNumber >= 165 ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.3)'
               }}
             />
           </div>
         )}
-
       </section>
     </>
   );
