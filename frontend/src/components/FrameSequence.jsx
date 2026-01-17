@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import Lenis from '@studio-freight/lenis';
 import './FrameSequence.css';
 
 const FrameSequence = () => {
@@ -21,6 +22,7 @@ const FrameSequence = () => {
   const audioRef = useRef(null);
   const progressAnimationRef = useRef(null);
   const progressStartTimeRef = useRef(null);
+  const lenisRef = useRef(null);
 
   // Core state machine
   const stateRef = useRef({
@@ -35,6 +37,8 @@ const FrameSequence = () => {
     isScrolling: false,
     scrollTimeout: null,
     boundaryAnimationTimeout: null,
+    lastFrameChangeTime: 0, // Track when last frame changed for rate limiting
+    cinematicAnimationId: null, // For automatic cinematic progression
   });
 
   // ============================================================
@@ -56,10 +60,11 @@ const FrameSequence = () => {
     // Timing
     autoPlayFPS: 24,
     autoPlayDelay: 500, // Delay before autoplay starts
-    smoothing: 0.15, // Frame interpolation smoothing
+    smoothing: 0.08, // Frame interpolation smoothing (lower = smoother, more easing)
+    cinematicFPS: 24, // Cinematic frame rate limit during scroll (higher = faster, more responsive)
 
     // Scroll mapping
-    pixelsPerFrame: 15, // How many pixels of scroll = 1 frame (slower = more pixels)
+    pixelsPerFrame: 40, // How many pixels of scroll = 1 frame (higher = slower, more cinematic)
   };
 
   // ============================================================
@@ -73,9 +78,23 @@ const FrameSequence = () => {
   // ============================================================
   // FRAME RENDERING - The only thing that changes the visual
   // ============================================================
-  const displayFrame = (frameIndex) => {
+  const displayFrame = (frameIndex, skipRateLimiting = false) => {
     // Clamp frame to valid range
     frameIndex = Math.max(0, Math.min(CONFIG.totalFrames - 1, Math.floor(frameIndex)));
+
+    // Rate limiting for cinematic effect (except during autoplay or boundary animations)
+    if (!skipRateLimiting && stateRef.current.currentPhase === 'scroll-exploration') {
+      const now = Date.now();
+      const timeSinceLastChange = now - stateRef.current.lastFrameChangeTime;
+      const minFrameTime = 1000 / CONFIG.cinematicFPS; // e.g., 24 FPS = ~42ms per frame
+
+      // Only update frame if enough time has passed
+      if (timeSinceLastChange < minFrameTime) {
+        return; // Skip this frame update to maintain cinematic pace
+      }
+
+      stateRef.current.lastFrameChangeTime = now;
+    }
 
     const img = imagesRef.current.get(frameIndex);
 
@@ -115,7 +134,7 @@ const FrameSequence = () => {
       }
 
       if (currentTime - lastFrameTime >= frameDelay) {
-        displayFrame(currentAutoFrame);
+        displayFrame(currentAutoFrame, true); // Skip rate limiting for autoplay
         stateRef.current.targetFrame = currentAutoFrame;
         currentAutoFrame++;
         lastFrameTime = currentTime;
@@ -182,7 +201,7 @@ const FrameSequence = () => {
         animFrame = Math.min(animFrame + 1, targetBoundary);
       }
 
-      displayFrame(animFrame);
+      displayFrame(animFrame, true); // Skip rate limiting for boundary animation
       stateRef.current.targetFrame = animFrame;
 
       // Continue until we reach boundary
@@ -213,11 +232,19 @@ const FrameSequence = () => {
     stateRef.current.currentPhase = 'scroll-exploration';
 
     // Calculate fake scroll space for FULL range (0-400)
-    const scrollRange = CONFIG.scrollEndFrame - CONFIG.scrollStartFrame; // 400 - 0 = 400 frames
-    const totalScrollSpace = scrollRange * CONFIG.pixelsPerFrame; // 400 * 15 = 6000px
     const viewportHeight = window.innerHeight;
-    const bufferSpace = viewportHeight * 2; // 2 viewports of buffer space at top
-    const requiredHeight = bufferSpace + totalScrollSpace + viewportHeight; // Buffer + scroll space + viewport
+
+    // IMPORTANT: We enter at frame 164, so we need enough space ABOVE to scroll back to frame 0
+    // We need EXTRA buffer space to ensure we can keep scrolling even near the top
+    const currentFrame = stateRef.current.currentFrame; // Should be 164
+    const scrollSpaceForFrames = currentFrame * CONFIG.pixelsPerFrame; // Space needed to scroll back 164 frames
+    const scrollSpaceBelow = (CONFIG.scrollEndFrame - currentFrame) * CONFIG.pixelsPerFrame; // Space needed to scroll to 400
+
+    // Add extra buffer at top to allow comfortable scrolling all the way to frame 0
+    // Need LOTS of buffer space to ensure scroll doesn't hit the top before reaching frame 0
+    const topBuffer = viewportHeight * 5; // 5 viewports of buffer at top
+    const bufferSpace = topBuffer + scrollSpaceForFrames; // Total space above entry point
+    const requiredHeight = bufferSpace + scrollSpaceBelow + viewportHeight; // Total height
 
     // Create/update the scroll container
     const section = document.getElementById('frameSection');
@@ -230,62 +257,167 @@ const FrameSequence = () => {
     }
 
     // Calculate where current frame should be in scroll space
-    // Frame 0 starts at bufferSpace position
-    const currentFrame = stateRef.current.currentFrame;
-    const frameOffsetFromStart = currentFrame - CONFIG.scrollStartFrame; // How many frames from start (0)
-    const scrollPosition = bufferSpace + (frameOffsetFromStart * CONFIG.pixelsPerFrame);
+    // We're at frame 164, position ourselves so we can scroll up to 0 or down to 400
+    const scrollPosition = bufferSpace; // Start at the position that allows backward scroll
 
-    // Set baseline: this is where frame 0 begins
-    stateRef.current.scrollBaseline = bufferSpace;
+    // Set baseline: we don't use baseline for cinematic mode, frames are controlled directly by scroll events
+    stateRef.current.scrollBaseline = topBuffer;
 
     console.log('📍 Scroll setup:', {
       requiredHeight,
       bufferSpace,
-      scrollRange,
-      totalScrollSpace,
+      topBuffer,
+      scrollSpaceForFrames,
+      scrollSpaceBelow,
       currentFrame,
       scrollPosition,
-      baseline: stateRef.current.scrollBaseline
+      baseline: stateRef.current.scrollBaseline,
+      pixelsPerFrame: CONFIG.pixelsPerFrame
     });
 
-    // Scroll to position instantly
+    // Scroll to position instantly (this is where frame 164 is)
     window.scrollTo({ top: scrollPosition, behavior: 'instant' });
 
     console.log('🎯 Phase C active: Scroll now controls frames 0 → 400 (full bidirectional range)');
   };
 
   // ============================================================
-  // SCROLL HANDLER - Maps scroll distance to frame number
+  // CINEMATIC AUTO-PROGRESSION - Frame changes at fixed rate (VIDEO-LIKE)
+  // ============================================================
+  const startCinematicProgression = (direction) => {
+    // Stop any existing cinematic animation
+    if (stateRef.current.cinematicAnimationId) {
+      clearInterval(stateRef.current.cinematicAnimationId);
+    }
+
+    const frameDuration = 1000 / CONFIG.cinematicFPS; // 24 FPS = ~42ms per frame
+    console.log(`🎬 Starting cinematic progression: ${direction > 0 ? 'forward' : 'backward'} at ${CONFIG.cinematicFPS} FPS (current frame: ${Math.round(stateRef.current.currentFrame)})`);
+
+    // Use setInterval for precise, consistent frame progression
+    stateRef.current.cinematicAnimationId = setInterval(() => {
+      if (!stateRef.current.isScrolling) {
+        // Stop the video playback
+        clearInterval(stateRef.current.cinematicAnimationId);
+        stateRef.current.cinematicAnimationId = null;
+        return;
+      }
+
+      const currentFrame = Math.round(stateRef.current.currentFrame);
+      let nextFrame = currentFrame;
+
+      // Move one frame in the scroll direction
+      if (direction > 0) {
+        nextFrame = Math.min(currentFrame + 1, CONFIG.scrollEndFrame);
+      } else if (direction < 0) {
+        nextFrame = Math.max(currentFrame - 1, CONFIG.scrollStartFrame);
+      }
+
+      // Update frame (like advancing video playback)
+      if (nextFrame !== currentFrame) {
+        displayFrame(nextFrame, true); // Skip rate limiting, we're controlling the rate here
+        stateRef.current.currentFrame = nextFrame;
+        stateRef.current.targetFrame = nextFrame;
+
+        // Log progress towards frame 0 when scrolling backward
+        if (direction < 0 && nextFrame <= 10) {
+          console.log(`📽️ Approaching frame 0: currently at frame ${nextFrame}`);
+        }
+      } else {
+        // Reached boundary, stop playback
+        stateRef.current.isScrolling = false;
+        clearInterval(stateRef.current.cinematicAnimationId);
+        stateRef.current.cinematicAnimationId = null;
+        console.log(`🎬 Video reached ${direction > 0 ? 'end' : 'start'} boundary at frame ${nextFrame}`);
+      }
+    }, frameDuration);
+  };
+
+  // ============================================================
+  // SCROLL HANDLER - Triggers video-like playback
   // ============================================================
   const handleScroll = () => {
     if (!stateRef.current.isReady) return;
     if (stateRef.current.currentPhase !== 'scroll-exploration') return;
 
     const scrollY = window.scrollY;
+    const lastScrollY = stateRef.current.lastScrollY || scrollY;
+    stateRef.current.lastScrollY = scrollY;
 
-    // Calculate scroll distance from baseline (where frame 164 starts)
-    const scrollDelta = scrollY - stateRef.current.scrollBaseline;
+    // Determine scroll direction
+    const scrollDirection = scrollY > lastScrollY ? 1 : scrollY < lastScrollY ? -1 : 0;
 
-    // Convert scroll distance to frame offset
-    const frameOffset = scrollDelta / CONFIG.pixelsPerFrame;
-
-    // Target frame = start frame + offset
-    const targetFrame = CONFIG.scrollStartFrame + frameOffset;
-
-    // Clamp to valid range
-    const clampedFrame = Math.max(
-      CONFIG.scrollStartFrame,
-      Math.min(CONFIG.scrollEndFrame, targetFrame)
-    );
-
-    // Track scroll direction
-    const direction = clampedFrame - stateRef.current.targetFrame;
-    if (Math.abs(direction) > 0.1) {
-      stateRef.current.lastScrollDirection = direction > 0 ? 1 : -1;
+    // Log when we're getting close to the top (potentially reaching frame 0)
+    const currentFrame = Math.round(stateRef.current.currentFrame);
+    if (scrollDirection < 0 && currentFrame <= 20 && scrollY < 1000) {
+      console.log(`🔍 Near top: frame ${currentFrame}, scrollY: ${scrollY}px`);
     }
 
-    // Update target - smooth render loop will handle the actual display
-    stateRef.current.targetFrame = clampedFrame;
+    // IMPORTANT: If we hit the top scroll boundary (scrollY <= 10) while scrolling backward,
+    // continue the cinematic progression automatically to reach frame 0
+    if (scrollY <= 10 && currentFrame > 0 && stateRef.current.lastScrollDirection < 0) {
+      console.log(`🎯 Hit top boundary at frame ${currentFrame}, continuing to frame 0...`);
+
+      // Clear any scroll stop timeout to prevent pausing
+      if (stateRef.current.scrollTimeout) {
+        clearTimeout(stateRef.current.scrollTimeout);
+      }
+
+      if (!stateRef.current.isScrolling) {
+        stateRef.current.isScrolling = true;
+        startCinematicProgression(-1); // Continue backward
+      }
+
+      // Keep the progression alive - don't set a pause timeout when at boundary
+      return; // Don't process normal scroll logic
+    }
+
+    if (scrollDirection !== 0) {
+      // Direction changed, restart with new direction
+      if (scrollDirection !== stateRef.current.lastScrollDirection && stateRef.current.isScrolling) {
+        console.log('↔️ Direction changed, restarting cinematic progression');
+        stateRef.current.isScrolling = false;
+        if (stateRef.current.cinematicAnimationId) {
+          clearInterval(stateRef.current.cinematicAnimationId);
+          stateRef.current.cinematicAnimationId = null;
+        }
+      }
+
+      stateRef.current.lastScrollDirection = scrollDirection;
+
+      // Mark as scrolling and start video playback
+      if (!stateRef.current.isScrolling) {
+        stateRef.current.isScrolling = true;
+        startCinematicProgression(scrollDirection);
+      }
+    }
+
+    // Clear any existing boundary animation
+    if (stateRef.current.boundaryAnimationTimeout) {
+      clearTimeout(stateRef.current.boundaryAnimationTimeout);
+      stateRef.current.boundaryAnimationTimeout = null;
+    }
+
+    // Clear existing scroll stop timeout
+    if (stateRef.current.scrollTimeout) {
+      clearTimeout(stateRef.current.scrollTimeout);
+    }
+
+    // Set timeout to detect when scrolling stops (pause video)
+    stateRef.current.scrollTimeout = setTimeout(() => {
+      stateRef.current.isScrolling = false;
+
+      // Stop cinematic animation (pause video)
+      if (stateRef.current.cinematicAnimationId) {
+        clearInterval(stateRef.current.cinematicAnimationId);
+        stateRef.current.cinematicAnimationId = null;
+      }
+
+      const pausedFrame = Math.round(stateRef.current.currentFrame);
+      console.log('⏸️ Video paused at frame:', pausedFrame, '| scrollY:', window.scrollY);
+
+      // Animate to nearest boundary
+      animateToBoundary(stateRef.current.lastScrollDirection);
+    }, 200); // 200ms after last scroll event (increased for smoother experience)
   };
 
   // ============================================================
@@ -328,10 +460,17 @@ const FrameSequence = () => {
   };
 
   // ============================================================
-  // SMOOTH RENDER LOOP - Interpolates between current and target
+  // SMOOTH RENDER LOOP - Only for non-scroll phases (autoplay, boundary animation)
   // ============================================================
   useEffect(() => {
     const render = () => {
+      // Skip smooth interpolation during scroll-controlled phase
+      // The cinematic progression handles frame updates directly
+      if (stateRef.current.currentPhase === 'scroll-exploration' && stateRef.current.isScrolling) {
+        stateRef.current.animationFrameId = requestAnimationFrame(render);
+        return;
+      }
+
       const diff = stateRef.current.targetFrame - stateRef.current.currentFrame;
       const step = diff * CONFIG.smoothing;
 
@@ -390,6 +529,40 @@ const FrameSequence = () => {
   }, []);
 
   // ============================================================
+  // LENIS SMOOTH SCROLL SETUP
+  // ============================================================
+  useEffect(() => {
+    // Initialize Lenis smooth scroll
+    const lenis = new Lenis({
+      duration: 1.2, // Scroll duration (higher = slower, smoother)
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Easing function
+      orientation: 'vertical',
+      gestureOrientation: 'vertical',
+      smoothWheel: true,
+      wheelMultiplier: 1,
+      smoothTouch: false,
+      touchMultiplier: 2,
+      infinite: false,
+    });
+
+    lenisRef.current = lenis;
+
+    // Lenis animation frame loop
+    function raf(time) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+
+    console.log('✨ Lenis smooth scroll initialized');
+
+    return () => {
+      lenis.destroy();
+      console.log('🗑️ Lenis destroyed');
+    };
+  }, []);
+
+  // ============================================================
   // IMAGE PRELOADING & SETUP
   // ============================================================
   useEffect(() => {
@@ -441,6 +614,21 @@ const FrameSequence = () => {
 
       if (stateRef.current.autoPlayTimeoutId) {
         cancelAnimationFrame(stateRef.current.autoPlayTimeoutId);
+      }
+
+      // Clean up scroll timeout
+      if (stateRef.current.scrollTimeout) {
+        clearTimeout(stateRef.current.scrollTimeout);
+      }
+
+      // Clean up boundary animation timeout
+      if (stateRef.current.boundaryAnimationTimeout) {
+        clearTimeout(stateRef.current.boundaryAnimationTimeout);
+      }
+
+      // Clean up cinematic animation interval
+      if (stateRef.current.cinematicAnimationId) {
+        clearInterval(stateRef.current.cinematicAnimationId);
       }
     };
   }, []);
