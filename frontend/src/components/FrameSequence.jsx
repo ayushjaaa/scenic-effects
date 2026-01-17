@@ -161,30 +161,49 @@ const FrameSequence = () => {
       stateRef.current.isAnimatingToEnd = false;
 
       const currentDisplayFrame = stateRef.current.currentFrame;
-      const middleScroll = 20000;
 
-      // Calculate scroll position for current frame
-      // Frame 400 = 20000px, Frame 0 = 14000px (20000 - 400*15)
-      // For frame 250: 20000 - (400-250)*15 = 20000 - 2250 = 17750px
-      const scrollPosition = middleScroll - (CONFIG.scrollEndFrame - currentDisplayFrame) * CONFIG.pixelsPerFrame;
-
-      // Scroll to calculated position instantly (with space above for backward scrolling)
-      window.scrollTo({ top: scrollPosition, behavior: 'instant' });
-
-      // Set proper baseline and scroll mode (same as when reaching frame 400)
-      stateRef.current.isScrollMode = true;
-      stateRef.current.scrollStartFrame = CONFIG.scrollEndFrame; // Always 400 for consistency
-      stateRef.current.scrollBaseline = middleScroll; // 20000px
-      stateRef.current.targetFrame = currentDisplayFrame;
+      // CRITICAL: Ensure section has scroll-mode height BEFORE scrolling
       setIsScrollMode(true);
 
+      // Calculate required height and scroll position for bidirectional scrolling
+      // Strategy: Add extra space ABOVE and BELOW the actual scroll range
+      const totalScrollSpace = CONFIG.scrollEndFrame * CONFIG.pixelsPerFrame; // 400 * 15 = 6000px
+      const viewportHeight = window.innerHeight;
+      const bufferSpace = viewportHeight * 5; // 5 viewports of buffer on each side
+      const requiredHeight = bufferSpace + totalScrollSpace + viewportHeight; // Buffer + scroll space + viewport
+
       if (section) {
+        section.classList.add('scroll-mode');
+        section.style.height = `${requiredHeight}px`;
         section.style.pointerEvents = 'auto';
+        // Force reflow to ensure height is applied immediately
+        section.offsetHeight;
       }
 
-      console.log('⚡ Animation interrupted at frame:', currentDisplayFrame);
-      console.log('📍 Scroll positioned at:', scrollPosition, 'px (baseline: ' + middleScroll + 'px)');
-      console.log('🎯 Can now scroll backward to reach frame 0');
+      // Calculate scroll position for current frame
+      // Add buffer space so frame 0 starts AFTER the buffer, giving space to scroll up
+      // Frame 0 = bufferSpace, Frame 400 = bufferSpace + 6000px
+      const scrollPosition = bufferSpace + (currentDisplayFrame * CONFIG.pixelsPerFrame);
+
+      // Set proper baseline and scroll mode - baseline is at the buffer position (where frame 0 is)
+      stateRef.current.scrollStartFrame = 0; // Frame 0 at baseline
+      stateRef.current.scrollBaseline = bufferSpace; // Frame 0 starts after buffer
+      stateRef.current.targetFrame = currentDisplayFrame;
+
+      // Scroll to calculated position instantly
+      window.scrollTo({ top: scrollPosition, behavior: 'instant' });
+
+      // Wait for browser to process scroll position, then enable scroll mode
+      setTimeout(() => {
+        stateRef.current.isScrollMode = true;
+        stateRef.current.isScrolling = false; // Reset scrolling flag to prevent auto-animation
+        console.log('⚡ Animation interrupted at frame:', currentDisplayFrame);
+        console.log('📍 Scroll positioned at:', scrollPosition, 'px');
+        console.log('📍 Frame 0 at:', bufferSpace, 'px, Frame 400 at:', bufferSpace + 6000, 'px');
+        console.log('📍 Buffer space:', bufferSpace, 'px');
+        console.log('📍 Actual browser scrollY:', window.scrollY);
+        console.log('🎯 Scroll mode enabled - can now scroll in both directions');
+      }, 50);
     }
 
     // If in scroll mode (after button click)
@@ -192,6 +211,10 @@ const FrameSequence = () => {
       const scrollY = window.scrollY;
       const scrollDelta = scrollY - stateRef.current.scrollBaseline;
       const frameDelta = scrollDelta / CONFIG.pixelsPerFrame;
+
+      // Calculate target frame from baseline (frame 400 at baseline)
+      // When scrolling up (negative delta), frames should decrease
+      // When scrolling down (positive delta), frames should increase
       const targetFrame = stateRef.current.scrollStartFrame + frameDelta;
       const clampedFrame = Math.max(0, Math.min(CONFIG.scrollEndFrame, targetFrame));
 
@@ -222,13 +245,16 @@ const FrameSequence = () => {
       }, CONFIG.scrollStopDelay);
 
       // Debug logging - throttled
-      if (!stateRef.current.lastLogTime || Date.now() - stateRef.current.lastLogTime > 100) {
-        console.log('🔄 Scroll:', {
+      if (!stateRef.current.lastLogTime || Date.now() - stateRef.current.lastLogTime > 500) {
+        console.log('🔄 Scroll Debug:', {
           scrollY: Math.round(scrollY),
           baseline: Math.round(stateRef.current.scrollBaseline),
           scrollDelta: Math.round(scrollDelta),
           frameDelta: Math.round(frameDelta * 10) / 10,
+          startFrame: stateRef.current.scrollStartFrame,
           targetFrame: Math.round(clampedFrame),
+          currentFrame: Math.round(stateRef.current.currentFrame),
+          direction: stateRef.current.lastScrollDirection === 1 ? 'forward' : 'backward'
         });
         stateRef.current.lastLogTime = Date.now();
       }
@@ -236,7 +262,8 @@ const FrameSequence = () => {
       return;
     }
 
-    // Original scroll behavior (before button click)
+    // Original scroll behavior (before button click) - Phase 1 (frames 0-163)
+    // This allows bidirectional scrolling during autoplay phase
     const rect = section.getBoundingClientRect();
     const scrollStart = -rect.top;
     const scrollEnd = rect.height - window.innerHeight;
@@ -304,31 +331,50 @@ const FrameSequence = () => {
 
         stateRef.current.isAnimatingToEnd = false;
 
-        // Set to exactly frame 400 to ensure proper calculation
-        stateRef.current.isScrollMode = true;
-        stateRef.current.scrollStartFrame = 400;
-        stateRef.current.targetFrame = 400;
+        // Enable scroll mode state
+        setIsScrollMode(true);
 
+        // Calculate required height and scroll position for bidirectional scrolling
+        // Strategy: Add extra space ABOVE and BELOW the actual scroll range
+        const totalScrollSpace = CONFIG.scrollEndFrame * CONFIG.pixelsPerFrame; // 400 * 15 = 6000px
+        const viewportHeight = window.innerHeight;
+        const bufferSpace = viewportHeight * 5; // 5 viewports of buffer on each side
+        const requiredHeight = bufferSpace + totalScrollSpace + viewportHeight; // Buffer + scroll space + viewport
+
+        // Get section and ensure it has scroll-mode height BEFORE scrolling
+        const section = document.getElementById('frameSection');
+        if (section) {
+          section.classList.add('scroll-mode');
+          section.style.height = `${requiredHeight}px`;
+          section.style.pointerEvents = 'auto';
+          // Force reflow to ensure height is applied immediately
+          section.offsetHeight;
+        }
+
+        // Calculate scroll position for frame 400
+        // Add buffer space so frame 0 starts AFTER the buffer, giving space to scroll up
+        // Frame 400 = bufferSpace + 6000px
+        const currentFrame = 400;
+        const scrollPosition = bufferSpace + (currentFrame * CONFIG.pixelsPerFrame);
+
+        // Set proper baseline and scroll mode - baseline is at the buffer position (where frame 0 is)
+        stateRef.current.scrollStartFrame = 0; // Frame 0 at baseline
+        stateRef.current.scrollBaseline = bufferSpace; // Frame 0 starts after buffer
+        stateRef.current.targetFrame = currentFrame;
+
+        // Scroll to calculated position instantly
+        window.scrollTo({ top: scrollPosition, behavior: 'instant' });
+
+        // Wait for browser to process scroll position, then enable scroll mode
         setTimeout(() => {
-          // Enable scroll mode
-          setIsScrollMode(true);
-
-          // Wait for section height to update, then scroll using native browser scroll
-          setTimeout(() => {
-            // Scroll to 20000px position using NATIVE scroll (massive scroll space above to reach frame 0)
-            const middleScroll = 20000;
-            const pixelsToReachZero = 400 * CONFIG.pixelsPerFrame; // 400 frames * 3 = 1200 pixels
-            window.scrollTo({ top: middleScroll, behavior: 'instant' });
-
-            stateRef.current.scrollBaseline = middleScroll;
-
-            console.log('📍 Scroll baseline set at Y:', middleScroll, 'px - Frame: 400');
-            console.log('📊 With pixelsPerFrame=' + CONFIG.pixelsPerFrame + ', you need ' + pixelsToReachZero + ' pixels to reach frame 0');
-            console.log('💡 Available scroll space above:', middleScroll, 'pixels - DEFINITELY can reach frame 0');
-            console.log('🎯 Scroll to Y=' + (middleScroll - pixelsToReachZero) + ' will show frame 0');
-            console.log('🎯 Native scroll enabled - scroll is now 6x slower and smoother!');
-          }, 100);
-        }, 100);
+          stateRef.current.isScrollMode = true;
+          stateRef.current.isScrolling = false; // Reset scrolling flag to prevent auto-animation
+          console.log('📍 Scroll positioned at:', scrollPosition, 'px');
+          console.log('📍 Frame 0 at:', bufferSpace, 'px, Frame 400 at:', bufferSpace + 6000, 'px');
+          console.log('📍 Buffer space:', bufferSpace, 'px');
+          console.log('📍 Actual browser scrollY:', window.scrollY);
+          console.log('🎯 Scroll mode enabled - can now scroll in both directions');
+        }, 50);
       }
     };
 
@@ -368,6 +414,8 @@ const FrameSequence = () => {
     const animate = (currentTime) => {
       if (currentTime - lastFrameTime >= frameDelay) {
         if (currentAutoFrame >= CONFIG.totalFrames) {
+          // Autoplay complete - enable bidirectional scrolling for Phase 1
+          console.log('✅ Autoplay complete at frame', currentAutoFrame - 1);
           return;
         }
 
@@ -526,7 +574,9 @@ const FrameSequence = () => {
       <section
         className={`frame-sequence-section ${isScrollMode ? 'scroll-mode' : ''}`}
         id="frameSection"
-        style={isScrollMode ? { height: '10000vh' } : {}}
+        style={isScrollMode ? {
+          height: `${(window.innerHeight * 5) + (CONFIG.scrollEndFrame * CONFIG.pixelsPerFrame) + window.innerHeight}px`
+        } : {}}
       >
         {/* Sticky container for scroll mode */}
         <div className={isScrollMode ? 'sticky-frame-container' : 'frame-container'}>
