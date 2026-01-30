@@ -167,40 +167,58 @@ const FrameSequence = () => {
   // ============================================================
   // AUTOMATIC FRAME PROGRESSION - Auto-advance after frame 165 to 436
   // ============================================================
-  const startAutoProgression = () => {
+  const startAutoProgression = (direction = 1) => {
     // Stop any existing auto progression
     if (stateRef.current.autoProgressionId) {
       clearInterval(stateRef.current.autoProgressionId);
     }
 
     const frameDuration = 1000 / CONFIG.autoPlayFPS; // 24 FPS
-    console.log('🎬 Starting automatic frame progression from frame 165 to 436');
+    console.log(`🎬 Starting automatic frame progression ${direction > 0 ? 'forward (165 → 436)' : 'backward (436 → 165)'}`);
 
     stateRef.current.autoProgressionId = setInterval(() => {
-      // Stop if user starts scrolling
-      if (stateRef.current.isScrolling) {
+      // Stop if user starts scrolling in opposite direction
+      if (stateRef.current.isScrolling && stateRef.current.lastScrollDirection !== direction) {
         clearInterval(stateRef.current.autoProgressionId);
         stateRef.current.autoProgressionId = null;
-        console.log('⚠️ Auto progression interrupted by scroll');
+        console.log('⚠️ Auto progression interrupted by opposite scroll direction');
         return;
       }
 
       const currentFrame = Math.round(stateRef.current.currentFrame);
 
-      // Continue progressing until we reach frame 436
-      if (currentFrame < CONFIG.secondPauseFrame) {
-        const nextFrame = currentFrame + 1;
-        displayFrame(nextFrame, true);
-        stateRef.current.currentFrame = nextFrame;
-        stateRef.current.targetFrame = nextFrame;
+      if (direction > 0) {
+        // Forward: 165 → 436
+        if (currentFrame < CONFIG.secondPauseFrame) {
+          const nextFrame = currentFrame + 1;
+          displayFrame(nextFrame, true);
+          stateRef.current.currentFrame = nextFrame;
+          stateRef.current.targetFrame = nextFrame;
+        } else {
+          // Reached frame 436, stop progression and show "Scroll More" text
+          clearInterval(stateRef.current.autoProgressionId);
+          stateRef.current.autoProgressionId = null;
+          console.log('⏸️ Auto progression paused at frame 436 - waiting for user scroll');
+          setCurrentPhase('paused-at-436');
+          stateRef.current.currentPhase = 'paused-at-436';
+          setShowScrollMoreText(true);
+        }
       } else {
-        // Reached frame 436, stop progression and show "Scroll More" text
-        clearInterval(stateRef.current.autoProgressionId);
-        stateRef.current.autoProgressionId = null;
-        console.log('⏸️ Auto progression paused at frame 436 - waiting for user scroll');
-        setCurrentPhase('paused-at-436');
-        stateRef.current.currentPhase = 'paused-at-436';
-        setShowScrollMoreText(true);
+        // Backward: 436 → 165
+        if (currentFrame > 165) {
+          const nextFrame = currentFrame - 1;
+          displayFrame(nextFrame, true);
+          stateRef.current.currentFrame = nextFrame;
+          stateRef.current.targetFrame = nextFrame;
+        } else {
+          // Reached frame 165, stop and pause
+          clearInterval(stateRef.current.autoProgressionId);
+          stateRef.current.autoProgressionId = null;
+          console.log('⏸️ Reverse progression paused at frame 165 - at boundary');
+          setCurrentPhase('paused-at-164');
+          stateRef.current.currentPhase = 'paused-at-164';
+          // Don't show button again, just pause
+        }
       }
     }, frameDuration);
   };
@@ -399,10 +417,12 @@ const FrameSequence = () => {
         stateRef.current.currentFrame = nextFrame;
         stateRef.current.targetFrame = nextFrame;
       } else {
-        // Reached end frame 1586, stop progression
+        // Reached end frame 1586, stop progression and enable scroll exploration
         clearInterval(stateRef.current.autoProgressionId);
         stateRef.current.autoProgressionId = null;
-        console.log('✅ Auto progression complete at frame 1586 - End of sequence');
+        console.log('✅ Auto progression complete at frame 1586 - Enabling scroll exploration');
+        setCurrentPhase('scroll-exploration');
+        stateRef.current.currentPhase = 'scroll-exploration';
       }
     }, frameDuration);
   };
@@ -413,30 +433,36 @@ const FrameSequence = () => {
   const animateToBoundary = (direction) => {
     const currentFrame = Math.round(stateRef.current.currentFrame);
 
+    // Define all pause boundaries
+    const pauseBoundaries = [164, 436, 742, 1024, 1301, 1577];
+
     // Determine which zone we're in and target boundary
     let targetBoundary = null;
 
-    if (currentFrame >= 1 && currentFrame <= CONFIG.autoplayEndFrame) {
-      // Zone 1: Frames 1-164
-      if (direction < 0) {
-        targetBoundary = 0; // Snap to frame 0 when scrolling backward
-      } else {
-        targetBoundary = CONFIG.autoplayEndFrame + 1; // Snap to frame 165 when scrolling forward
+    if (direction < 0) {
+      // Scrolling backward - find the nearest pause boundary below current frame
+      for (let i = pauseBoundaries.length - 1; i >= 0; i--) {
+        if (currentFrame > pauseBoundaries[i]) {
+          targetBoundary = pauseBoundaries[i];
+          break;
+        }
       }
-    } else if (currentFrame >= CONFIG.autoplayEndFrame + 1 && currentFrame <= CONFIG.scrollEndFrame) {
-      // Zone 2: Frames 165-1586
-      if (direction < 0) {
-        // Scrolling backward from 165-1586 → allow free movement, no snapping
-        console.log('📍 Scrolling backward from frames 165-1586 - no boundary animation');
-        return;
-      } else {
-        // Scrolling forward from 165-1586 → snap to 1586
+      // If no boundary found, go to frame 0
+      if (targetBoundary === null && currentFrame > 0) {
+        targetBoundary = 0;
+      }
+    } else {
+      // Scrolling forward - find the nearest pause boundary above current frame
+      for (let i = 0; i < pauseBoundaries.length; i++) {
+        if (currentFrame < pauseBoundaries[i]) {
+          targetBoundary = pauseBoundaries[i];
+          break;
+        }
+      }
+      // If no boundary found, go to end
+      if (targetBoundary === null) {
         targetBoundary = CONFIG.scrollEndFrame;
       }
-    } else if (currentFrame === 0) {
-      // Already at frame 0, no animation needed
-      console.log('📍 Already at frame 0');
-      return;
     }
 
     // If no target boundary determined, exit
@@ -485,8 +511,32 @@ const FrameSequence = () => {
       } else {
         console.log(`✅ Reached boundary at frame ${targetBoundary}`);
 
-        // If we reached frame 165, start automatic progression
-        if (targetBoundary === CONFIG.autoplayEndFrame + 1) {
+        // Handle pause points based on which boundary we reached
+        if (targetBoundary === 164) {
+          setCurrentPhase('paused');
+          stateRef.current.currentPhase = 'paused';
+        } else if (targetBoundary === 436) {
+          setCurrentPhase('paused-at-436');
+          stateRef.current.currentPhase = 'paused-at-436';
+          setShowScrollMoreText(true);
+        } else if (targetBoundary === 742) {
+          setCurrentPhase('paused-at-742');
+          stateRef.current.currentPhase = 'paused-at-742';
+          setShowScrollMoreText742(true);
+        } else if (targetBoundary === 1024) {
+          setCurrentPhase('paused-at-1024');
+          stateRef.current.currentPhase = 'paused-at-1024';
+          setShowScrollMoreText1024(true);
+        } else if (targetBoundary === 1301) {
+          setCurrentPhase('paused-at-1301');
+          stateRef.current.currentPhase = 'paused-at-1301';
+          setShowScrollMoreText1301(true);
+        } else if (targetBoundary === 1577) {
+          setCurrentPhase('paused-at-1577');
+          stateRef.current.currentPhase = 'paused-at-1577';
+          setShowScrollMoreText1577(true);
+        } else if (targetBoundary === 165) {
+          // Forward scroll to 165 starts auto progression
           console.log('🎯 Reached frame 165, starting automatic progression');
           startAutoProgression();
         }
@@ -619,9 +669,22 @@ const FrameSequence = () => {
   const handleScroll = () => {
     if (!stateRef.current.isReady) return;
 
-    // Ignore scroll events during auto progression (when autoProgressionId is active)
-    if (stateRef.current.autoProgressionId) {
-      // Exception: Only handle scroll if we're at a pause point
+    // Detect scroll direction
+    const scrollY = window.scrollY;
+    const lastScrollY = stateRef.current.lastScrollY || scrollY;
+    const scrollDirection = scrollY > lastScrollY ? 1 : scrollY < lastScrollY ? -1 : 0;
+    stateRef.current.lastScrollY = scrollY;
+
+    // If user scrolls backward during auto progression, stop it and enable reverse scroll
+    if (stateRef.current.autoProgressionId && scrollDirection < 0) {
+      console.log('🔄 Backward scroll detected during auto progression - enabling reverse scroll');
+      clearInterval(stateRef.current.autoProgressionId);
+      stateRef.current.autoProgressionId = null;
+      setCurrentPhase('scroll-exploration');
+      stateRef.current.currentPhase = 'scroll-exploration';
+      // Continue to handle scroll below
+    } else if (stateRef.current.autoProgressionId) {
+      // Ignore forward/no scroll during auto progression - only handle if at pause point
       const pausePhases = ['paused-at-436', 'paused-at-742', 'paused-at-1024', 'paused-at-1301', 'paused-at-1577'];
       if (!pausePhases.includes(stateRef.current.currentPhase)) {
         return; // Ignore scroll during active auto progression
@@ -680,13 +743,6 @@ const FrameSequence = () => {
 
     // Only allow scroll handling in scroll-exploration phase
     if (stateRef.current.currentPhase !== 'scroll-exploration') return;
-
-    const scrollY = window.scrollY;
-    const lastScrollY = stateRef.current.lastScrollY || scrollY;
-    stateRef.current.lastScrollY = scrollY;
-
-    // Determine scroll direction
-    const scrollDirection = scrollY > lastScrollY ? 1 : scrollY < lastScrollY ? -1 : 0;
 
     // Log when we're getting close to the top (potentially reaching frame 0)
     const currentFrame = Math.round(stateRef.current.currentFrame);
