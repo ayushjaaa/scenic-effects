@@ -8,11 +8,16 @@ const FrameSequence = () => {
   // ============================================================
   const [loadingPercent, setLoadingPercent] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentPhase, setCurrentPhase] = useState('loading'); // 'loading', 'autoplay', 'paused', 'scroll-exploration'
+  const [currentPhase, setCurrentPhase] = useState('loading'); // 'loading', 'autoplay', 'paused', 'scroll-exploration', 'paused-at-436', 'auto-progressing-2', 'paused-at-742', 'auto-progressing-3', 'paused-at-1024', 'auto-progressing-4', 'paused-at-1301', 'auto-progressing-5', 'paused-at-1577', 'auto-progressing-6'
   const [showButton, setShowButton] = useState(false);
   const [showAudioIcon, setShowAudioIcon] = useState(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [currentFrameNumber, setCurrentFrameNumber] = useState(0);
+  const [showScrollMoreText, setShowScrollMoreText] = useState(false);
+  const [showScrollMoreText742, setShowScrollMoreText742] = useState(false);
+  const [showScrollMoreText1024, setShowScrollMoreText1024] = useState(false);
+  const [showScrollMoreText1301, setShowScrollMoreText1301] = useState(false);
+  const [showScrollMoreText1577, setShowScrollMoreText1577] = useState(false);
 
   // ============================================================
   // REFS - Persistent data that doesn't trigger re-renders
@@ -55,6 +60,11 @@ const FrameSequence = () => {
     totalFrames: 1587, // 0-1586 (1587 frames total)
     autoplayEndFrame: 164, // Phase A: frames 0-164 (autoplay)
     pauseFrame: 164, // Phase B: pause at 164, button appears
+    secondPauseFrame: 436, // Phase D: pause at 436, "Scroll More" text appears
+    thirdPauseFrame: 742, // Phase E: pause at 742, "Scroll More" text appears
+    fourthPauseFrame: 1024, // Phase F: pause at 1024, "Scroll More" text appears
+    fifthPauseFrame: 1301, // Phase G: pause at 1301, "Scroll More" text appears
+    sixthPauseFrame: 1577, // Phase H: pause at 1577, "Scroll More" text appears
     scrollStartFrame: 0, // Phase C: scroll starts at 0 (can go back to beginning)
     scrollEndFrame: 1586, // Phase C: scroll ends at 1586
 
@@ -155,7 +165,7 @@ const FrameSequence = () => {
   // The button is shown by the autoplay logic when it reaches frame 164
 
   // ============================================================
-  // AUTOMATIC FRAME PROGRESSION - Auto-advance after frame 165
+  // AUTOMATIC FRAME PROGRESSION - Auto-advance after frame 165 to 436
   // ============================================================
   const startAutoProgression = () => {
     // Stop any existing auto progression
@@ -164,7 +174,7 @@ const FrameSequence = () => {
     }
 
     const frameDuration = 1000 / CONFIG.autoPlayFPS; // 24 FPS
-    console.log('🎬 Starting automatic frame progression from frame 165 to 1586');
+    console.log('🎬 Starting automatic frame progression from frame 165 to 436');
 
     stateRef.current.autoProgressionId = setInterval(() => {
       // Stop if user starts scrolling
@@ -177,17 +187,222 @@ const FrameSequence = () => {
 
       const currentFrame = Math.round(stateRef.current.currentFrame);
 
-      // Continue progressing until we reach frame 1586
+      // Continue progressing until we reach frame 436
+      if (currentFrame < CONFIG.secondPauseFrame) {
+        const nextFrame = currentFrame + 1;
+        displayFrame(nextFrame, true);
+        stateRef.current.currentFrame = nextFrame;
+        stateRef.current.targetFrame = nextFrame;
+      } else {
+        // Reached frame 436, stop progression and show "Scroll More" text
+        clearInterval(stateRef.current.autoProgressionId);
+        stateRef.current.autoProgressionId = null;
+        console.log('⏸️ Auto progression paused at frame 436 - waiting for user scroll');
+        setCurrentPhase('paused-at-436');
+        stateRef.current.currentPhase = 'paused-at-436';
+        setShowScrollMoreText(true);
+      }
+    }, frameDuration);
+  };
+
+  // ============================================================
+  // AUTOMATIC FRAME PROGRESSION 2 - Auto-advance after frame 436 to 742
+  // ============================================================
+  const startAutoProgression2 = () => {
+    // Stop any existing auto progression
+    if (stateRef.current.autoProgressionId) {
+      clearInterval(stateRef.current.autoProgressionId);
+    }
+
+    const frameDuration = 1000 / CONFIG.autoPlayFPS; // 24 FPS
+    console.log('🎬 Starting automatic frame progression from frame 436 to 742');
+
+    stateRef.current.autoProgressionId = setInterval(() => {
+      // Stop if user starts scrolling
+      if (stateRef.current.isScrolling) {
+        clearInterval(stateRef.current.autoProgressionId);
+        stateRef.current.autoProgressionId = null;
+        console.log('⚠️ Auto progression interrupted by scroll');
+        return;
+      }
+
+      const currentFrame = Math.round(stateRef.current.currentFrame);
+
+      // Continue progressing until we reach frame 742
+      if (currentFrame < CONFIG.thirdPauseFrame) {
+        const nextFrame = currentFrame + 1;
+        displayFrame(nextFrame, true);
+        stateRef.current.currentFrame = nextFrame;
+        stateRef.current.targetFrame = nextFrame;
+      } else {
+        // Reached frame 742, stop progression and show "Scroll More" text
+        clearInterval(stateRef.current.autoProgressionId);
+        stateRef.current.autoProgressionId = null;
+        console.log('⏸️ Auto progression paused at frame 742 - waiting for user scroll');
+        setCurrentPhase('paused-at-742');
+        stateRef.current.currentPhase = 'paused-at-742';
+        setShowScrollMoreText742(true);
+      }
+    }, frameDuration);
+  };
+
+  // ============================================================
+  // AUTOMATIC FRAME PROGRESSION 3 - Auto-advance after frame 742 to 1024
+  // ============================================================
+  const startAutoProgression3 = () => {
+    // Stop any existing auto progression
+    if (stateRef.current.autoProgressionId) {
+      clearInterval(stateRef.current.autoProgressionId);
+    }
+
+    const frameDuration = 1000 / CONFIG.autoPlayFPS; // 24 FPS
+    console.log('🎬 Starting automatic frame progression from frame 742 to 1024');
+
+    stateRef.current.autoProgressionId = setInterval(() => {
+      // Stop if user starts scrolling
+      if (stateRef.current.isScrolling) {
+        clearInterval(stateRef.current.autoProgressionId);
+        stateRef.current.autoProgressionId = null;
+        console.log('⚠️ Auto progression interrupted by scroll');
+        return;
+      }
+
+      const currentFrame = Math.round(stateRef.current.currentFrame);
+
+      // Continue progressing until we reach frame 1024
+      if (currentFrame < CONFIG.fourthPauseFrame) {
+        const nextFrame = currentFrame + 1;
+        displayFrame(nextFrame, true);
+        stateRef.current.currentFrame = nextFrame;
+        stateRef.current.targetFrame = nextFrame;
+      } else {
+        // Reached frame 1024, stop progression and show "Scroll More" text
+        clearInterval(stateRef.current.autoProgressionId);
+        stateRef.current.autoProgressionId = null;
+        console.log('⏸️ Auto progression paused at frame 1024 - waiting for user scroll');
+        setCurrentPhase('paused-at-1024');
+        stateRef.current.currentPhase = 'paused-at-1024';
+        setShowScrollMoreText1024(true);
+      }
+    }, frameDuration);
+  };
+
+  // ============================================================
+  // AUTOMATIC FRAME PROGRESSION 4 - Auto-advance after frame 1024 to 1301
+  // ============================================================
+  const startAutoProgression4 = () => {
+    // Stop any existing auto progression
+    if (stateRef.current.autoProgressionId) {
+      clearInterval(stateRef.current.autoProgressionId);
+    }
+
+    const frameDuration = 1000 / CONFIG.autoPlayFPS; // 24 FPS
+    console.log('🎬 Starting automatic frame progression from frame 1024 to 1301');
+
+    stateRef.current.autoProgressionId = setInterval(() => {
+      // Stop if user starts scrolling
+      if (stateRef.current.isScrolling) {
+        clearInterval(stateRef.current.autoProgressionId);
+        stateRef.current.autoProgressionId = null;
+        console.log('⚠️ Auto progression interrupted by scroll');
+        return;
+      }
+
+      const currentFrame = Math.round(stateRef.current.currentFrame);
+
+      // Continue progressing until we reach frame 1301
+      if (currentFrame < CONFIG.fifthPauseFrame) {
+        const nextFrame = currentFrame + 1;
+        displayFrame(nextFrame, true);
+        stateRef.current.currentFrame = nextFrame;
+        stateRef.current.targetFrame = nextFrame;
+      } else {
+        // Reached frame 1301, stop progression and show "Scroll More" text
+        clearInterval(stateRef.current.autoProgressionId);
+        stateRef.current.autoProgressionId = null;
+        console.log('⏸️ Auto progression paused at frame 1301 - waiting for user scroll');
+        setCurrentPhase('paused-at-1301');
+        stateRef.current.currentPhase = 'paused-at-1301';
+        setShowScrollMoreText1301(true);
+      }
+    }, frameDuration);
+  };
+
+  // ============================================================
+  // AUTOMATIC FRAME PROGRESSION 5 - Auto-advance after frame 1301 to 1577
+  // ============================================================
+  const startAutoProgression5 = () => {
+    // Stop any existing auto progression
+    if (stateRef.current.autoProgressionId) {
+      clearInterval(stateRef.current.autoProgressionId);
+    }
+
+    const frameDuration = 1000 / CONFIG.autoPlayFPS; // 24 FPS
+    console.log('🎬 Starting automatic frame progression from frame 1301 to 1577');
+
+    stateRef.current.autoProgressionId = setInterval(() => {
+      // Stop if user starts scrolling
+      if (stateRef.current.isScrolling) {
+        clearInterval(stateRef.current.autoProgressionId);
+        stateRef.current.autoProgressionId = null;
+        console.log('⚠️ Auto progression interrupted by scroll');
+        return;
+      }
+
+      const currentFrame = Math.round(stateRef.current.currentFrame);
+
+      // Continue progressing until we reach frame 1577
+      if (currentFrame < CONFIG.sixthPauseFrame) {
+        const nextFrame = currentFrame + 1;
+        displayFrame(nextFrame, true);
+        stateRef.current.currentFrame = nextFrame;
+        stateRef.current.targetFrame = nextFrame;
+      } else {
+        // Reached frame 1577, stop progression and show "Scroll More" text
+        clearInterval(stateRef.current.autoProgressionId);
+        stateRef.current.autoProgressionId = null;
+        console.log('⏸️ Auto progression paused at frame 1577 - waiting for user scroll');
+        setCurrentPhase('paused-at-1577');
+        stateRef.current.currentPhase = 'paused-at-1577';
+        setShowScrollMoreText1577(true);
+      }
+    }, frameDuration);
+  };
+
+  // ============================================================
+  // AUTOMATIC FRAME PROGRESSION 6 - Auto-advance after frame 1577 to end (1586)
+  // ============================================================
+  const startAutoProgression6 = () => {
+    // Stop any existing auto progression
+    if (stateRef.current.autoProgressionId) {
+      clearInterval(stateRef.current.autoProgressionId);
+    }
+
+    const frameDuration = 1000 / CONFIG.autoPlayFPS; // 24 FPS
+    console.log('🎬 Starting automatic frame progression from frame 1577 to 1586');
+
+    stateRef.current.autoProgressionId = setInterval(() => {
+      // Stop if user starts scrolling
+      if (stateRef.current.isScrolling) {
+        clearInterval(stateRef.current.autoProgressionId);
+        stateRef.current.autoProgressionId = null;
+        console.log('⚠️ Auto progression interrupted by scroll');
+        return;
+      }
+
+      const currentFrame = Math.round(stateRef.current.currentFrame);
+
+      // Continue progressing until we reach frame 1586 (end)
       if (currentFrame < CONFIG.scrollEndFrame) {
         const nextFrame = currentFrame + 1;
         displayFrame(nextFrame, true);
         stateRef.current.currentFrame = nextFrame;
         stateRef.current.targetFrame = nextFrame;
       } else {
-        // Reached end, stop progression
+        // Reached end frame 1586, stop progression
         clearInterval(stateRef.current.autoProgressionId);
         stateRef.current.autoProgressionId = null;
-        console.log('✅ Auto progression complete at frame 1586');
+        console.log('✅ Auto progression complete at frame 1586 - End of sequence');
       }
     }, frameDuration);
   };
@@ -403,6 +618,67 @@ const FrameSequence = () => {
   // ============================================================
   const handleScroll = () => {
     if (!stateRef.current.isReady) return;
+
+    // Ignore scroll events during auto progression (when autoProgressionId is active)
+    if (stateRef.current.autoProgressionId) {
+      // Exception: Only handle scroll if we're at a pause point
+      const pausePhases = ['paused-at-436', 'paused-at-742', 'paused-at-1024', 'paused-at-1301', 'paused-at-1577'];
+      if (!pausePhases.includes(stateRef.current.currentPhase)) {
+        return; // Ignore scroll during active auto progression
+      }
+    }
+
+    // If we're paused at frame 436, start auto progression to 742
+    if (stateRef.current.currentPhase === 'paused-at-436') {
+      console.log('🎯 User scrolled at frame 436, starting auto progression to frame 742');
+      setShowScrollMoreText(false);
+      setCurrentPhase('auto-progressing-2');
+      stateRef.current.currentPhase = 'auto-progressing-2';
+      startAutoProgression2(); // Start automatic progression from 436 to 742
+      return; // Exit early, don't handle scroll yet
+    }
+
+    // If we're paused at frame 742, start auto progression to 1024
+    if (stateRef.current.currentPhase === 'paused-at-742') {
+      console.log('🎯 User scrolled at frame 742, starting auto progression to frame 1024');
+      setShowScrollMoreText742(false);
+      setCurrentPhase('auto-progressing-3');
+      stateRef.current.currentPhase = 'auto-progressing-3';
+      startAutoProgression3(); // Start automatic progression from 742 to 1024
+      return; // Exit early, don't handle scroll yet
+    }
+
+    // If we're paused at frame 1024, start auto progression to 1301
+    if (stateRef.current.currentPhase === 'paused-at-1024') {
+      console.log('🎯 User scrolled at frame 1024, starting auto progression to frame 1301');
+      setShowScrollMoreText1024(false);
+      setCurrentPhase('auto-progressing-4');
+      stateRef.current.currentPhase = 'auto-progressing-4';
+      startAutoProgression4(); // Start automatic progression from 1024 to 1301
+      return; // Exit early, don't handle scroll yet
+    }
+
+    // If we're paused at frame 1301, start auto progression to 1577
+    if (stateRef.current.currentPhase === 'paused-at-1301') {
+      console.log('🎯 User scrolled at frame 1301, starting auto progression to frame 1577');
+      setShowScrollMoreText1301(false);
+      setCurrentPhase('auto-progressing-5');
+      stateRef.current.currentPhase = 'auto-progressing-5';
+      startAutoProgression5(); // Start automatic progression from 1301 to 1577
+      return; // Exit early, don't handle scroll yet
+    }
+
+    // If we're paused at frame 1577, start auto progression to end
+    if (stateRef.current.currentPhase === 'paused-at-1577') {
+      console.log('🎯 User scrolled at frame 1577, starting auto progression to frame 1586');
+      setShowScrollMoreText1577(false);
+      setCurrentPhase('auto-progressing-6');
+      stateRef.current.currentPhase = 'auto-progressing-6';
+      startAutoProgression6(); // Start automatic progression from 1577 to 1586
+      return; // Exit early, don't handle scroll yet
+    }
+
+    // Only allow scroll handling in scroll-exploration phase
     if (stateRef.current.currentPhase !== 'scroll-exploration') return;
 
     const scrollY = window.scrollY;
@@ -745,11 +1021,11 @@ const FrameSequence = () => {
 
       {/* Frame Sequence Section - The Pinned Stage */}
       <section
-        className={`frame-sequence-section ${currentPhase === 'scroll-exploration' ? 'scroll-mode' : ''}`}
+        className={`frame-sequence-section ${(currentPhase === 'scroll-exploration' || currentPhase === 'paused-at-436' || currentPhase === 'auto-progressing-2' || currentPhase === 'paused-at-742' || currentPhase === 'auto-progressing-3' || currentPhase === 'paused-at-1024' || currentPhase === 'auto-progressing-4' || currentPhase === 'paused-at-1301' || currentPhase === 'auto-progressing-5' || currentPhase === 'paused-at-1577' || currentPhase === 'auto-progressing-6') ? 'scroll-mode' : ''}`}
         id="frameSection"
       >
         {/* The canvas - either normal or sticky */}
-        <div className={currentPhase === 'scroll-exploration' ? 'sticky-frame-container' : 'frame-container'}>
+        <div className={(currentPhase === 'scroll-exploration' || currentPhase === 'paused-at-436' || currentPhase === 'auto-progressing-2' || currentPhase === 'paused-at-742' || currentPhase === 'auto-progressing-3' || currentPhase === 'paused-at-1024' || currentPhase === 'auto-progressing-4' || currentPhase === 'paused-at-1301' || currentPhase === 'auto-progressing-5' || currentPhase === 'paused-at-1577' || currentPhase === 'auto-progressing-6') ? 'sticky-frame-container' : 'frame-container'}>
           <img
             ref={imgRef}
             id="currentFrame"
@@ -771,6 +1047,41 @@ const FrameSequence = () => {
                 Enter Experience
               </button>
             )}
+          </div>
+        )}
+
+        {/* Scroll More Text - Pause at Frame 436 */}
+        {showScrollMoreText && currentPhase === 'paused-at-436' && (
+          <div className="scroll-more-content">
+            <p className="scroll-more-text">Scroll More</p>
+          </div>
+        )}
+
+        {/* Scroll More Text - Pause at Frame 742 */}
+        {showScrollMoreText742 && currentPhase === 'paused-at-742' && (
+          <div className="scroll-more-content">
+            <p className="scroll-more-text">Scroll More</p>
+          </div>
+        )}
+
+        {/* Scroll More Text - Pause at Frame 1024 */}
+        {showScrollMoreText1024 && currentPhase === 'paused-at-1024' && (
+          <div className="scroll-more-content">
+            <p className="scroll-more-text">Scroll More</p>
+          </div>
+        )}
+
+        {/* Scroll More Text - Pause at Frame 1301 */}
+        {showScrollMoreText1301 && currentPhase === 'paused-at-1301' && (
+          <div className="scroll-more-content">
+            <p className="scroll-more-text">Scroll More</p>
+          </div>
+        )}
+
+        {/* Scroll More Text - Pause at Frame 1577 */}
+        {showScrollMoreText1577 && currentPhase === 'paused-at-1577' && (
+          <div className="scroll-more-content">
+            <p className="scroll-more-text">Scroll More</p>
           </div>
         )}
 

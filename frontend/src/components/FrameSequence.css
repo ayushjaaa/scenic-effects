@@ -255,6 +255,52 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
+/* Scroll More Content - Frame 436 Pause */
+.scroll-more-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  text-align: center;
+  animation: fadeIn 0.8s ease-out;
+}
+
+.scroll-more-text {
+  font-size: 1.5rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: white;
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.6);
+  background: linear-gradient(180deg, #ffffff 0%, rgba(255, 255, 255, 0.9) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+  animation: pulse-text 2s ease-in-out infinite;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -40%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+@keyframes pulse-text {
+  0%, 100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 /* Audio Icon */
 .audio-icon {
   position: fixed;
@@ -445,6 +491,10 @@
     font-size: 0.9rem;
   }
 
+  .scroll-more-text {
+    font-size: 1.25rem;
+  }
+
   .frame-content-section h1 {
     font-size: 2rem;
   }
@@ -478,6 +528,10 @@
   .hero-button {
     padding: 0.75rem 1.75rem;
     font-size: 0.85rem;
+  }
+
+  .scroll-more-text {
+    font-size: 1.1rem;
   }
 
   .audio-icon {
