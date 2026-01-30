@@ -39,6 +39,7 @@ const FrameSequence = () => {
     boundaryAnimationTimeout: null,
     lastFrameChangeTime: 0, // Track when last frame changed for rate limiting
     cinematicAnimationId: null, // For automatic cinematic progression
+    autoProgressionId: null, // For automatic frame progression after frame 165
   });
 
   // ============================================================
@@ -46,16 +47,16 @@ const FrameSequence = () => {
   // ============================================================
   const CONFIG = {
     // Frame assets
-    imageBaseURL: '/Rotoris_world_experience_',
-    imageFormat: 'avif.jpeg',
+    imageBaseURL: 'https://cdn.shopify.com/s/files/1/0745/9943/2344/files/Rotoris_world_experience_',
+    imageFormat: 'avif',
     paddingZeros: 5,
 
     // Frame ranges - THE TIMELINE
-    totalFrames: 401, // 0-400 (401 frames total)
+    totalFrames: 1587, // 0-1586 (1587 frames total)
     autoplayEndFrame: 164, // Phase A: frames 0-164 (autoplay)
     pauseFrame: 164, // Phase B: pause at 164, button appears
     scrollStartFrame: 0, // Phase C: scroll starts at 0 (can go back to beginning)
-    scrollEndFrame: 400, // Phase C: scroll ends at 400
+    scrollEndFrame: 1586, // Phase C: scroll ends at 1586
 
     // Timing
     autoPlayFPS: 24,
@@ -154,31 +155,90 @@ const FrameSequence = () => {
   // The button is shown by the autoplay logic when it reaches frame 164
 
   // ============================================================
+  // AUTOMATIC FRAME PROGRESSION - Auto-advance after frame 165
+  // ============================================================
+  const startAutoProgression = () => {
+    // Stop any existing auto progression
+    if (stateRef.current.autoProgressionId) {
+      clearInterval(stateRef.current.autoProgressionId);
+    }
+
+    const frameDuration = 1000 / CONFIG.autoPlayFPS; // 24 FPS
+    console.log('🎬 Starting automatic frame progression from frame 165 to 1586');
+
+    stateRef.current.autoProgressionId = setInterval(() => {
+      // Stop if user starts scrolling
+      if (stateRef.current.isScrolling) {
+        clearInterval(stateRef.current.autoProgressionId);
+        stateRef.current.autoProgressionId = null;
+        console.log('⚠️ Auto progression interrupted by scroll');
+        return;
+      }
+
+      const currentFrame = Math.round(stateRef.current.currentFrame);
+
+      // Continue progressing until we reach frame 1586
+      if (currentFrame < CONFIG.scrollEndFrame) {
+        const nextFrame = currentFrame + 1;
+        displayFrame(nextFrame, true);
+        stateRef.current.currentFrame = nextFrame;
+        stateRef.current.targetFrame = nextFrame;
+      } else {
+        // Reached end, stop progression
+        clearInterval(stateRef.current.autoProgressionId);
+        stateRef.current.autoProgressionId = null;
+        console.log('✅ Auto progression complete at frame 1586');
+      }
+    }, frameDuration);
+  };
+
+  // ============================================================
   // BOUNDARY ANIMATION - Snap to nearest boundary when scroll stops
   // ============================================================
   const animateToBoundary = (direction) => {
     const currentFrame = Math.round(stateRef.current.currentFrame);
 
-    // Only animate to boundary if we're in the "experience zone" (frames 165-400)
-    // Frames 0-164 can be freely scrolled without auto-animation
-    if (currentFrame <= CONFIG.autoplayEndFrame) {
-      console.log('📍 In free scroll zone (0-164), no boundary animation');
+    // Determine which zone we're in and target boundary
+    let targetBoundary = null;
+
+    if (currentFrame >= 1 && currentFrame <= CONFIG.autoplayEndFrame) {
+      // Zone 1: Frames 1-164
+      if (direction < 0) {
+        targetBoundary = 0; // Snap to frame 0 when scrolling backward
+      } else {
+        targetBoundary = CONFIG.autoplayEndFrame + 1; // Snap to frame 165 when scrolling forward
+      }
+    } else if (currentFrame >= CONFIG.autoplayEndFrame + 1 && currentFrame <= CONFIG.scrollEndFrame) {
+      // Zone 2: Frames 165-1586
+      if (direction < 0) {
+        // Scrolling backward from 165-1586 → allow free movement, no snapping
+        console.log('📍 Scrolling backward from frames 165-1586 - no boundary animation');
+        return;
+      } else {
+        // Scrolling forward from 165-1586 → snap to 1586
+        targetBoundary = CONFIG.scrollEndFrame;
+      }
+    } else if (currentFrame === 0) {
+      // Already at frame 0, no animation needed
+      console.log('📍 Already at frame 0');
       return;
     }
 
-    // We're in frames 165-400, determine target boundary
-    let targetBoundary;
-    if (direction < 0) {
-      // Scrolling backward (up) → go to frame 165
-      targetBoundary = CONFIG.autoplayEndFrame + 1; // Frame 165
-    } else {
-      // Scrolling forward (down) → go to frame 400
-      targetBoundary = CONFIG.scrollEndFrame; // Frame 400
+    // If no target boundary determined, exit
+    if (targetBoundary === null) {
+      console.log('📍 No boundary animation needed');
+      return;
     }
 
-    // If already at boundary, don't animate
+    // If already at target boundary, don't animate
     if (currentFrame === targetBoundary) {
       console.log('📍 Already at boundary:', targetBoundary);
+
+      // If we're at frame 165, start automatic progression
+      if (currentFrame === CONFIG.autoplayEndFrame + 1) {
+        console.log('🎯 At frame 165, starting automatic progression');
+        startAutoProgression();
+      }
       return;
     }
 
@@ -195,7 +255,7 @@ const FrameSequence = () => {
       }
 
       // Move one frame toward boundary
-      if (direction < 0) {
+      if (targetBoundary < animFrame) {
         animFrame = Math.max(animFrame - 1, targetBoundary);
       } else {
         animFrame = Math.min(animFrame + 1, targetBoundary);
@@ -209,6 +269,12 @@ const FrameSequence = () => {
         stateRef.current.boundaryAnimationTimeout = setTimeout(animate, frameDuration);
       } else {
         console.log(`✅ Reached boundary at frame ${targetBoundary}`);
+
+        // If we reached frame 165, start automatic progression
+        if (targetBoundary === CONFIG.autoplayEndFrame + 1) {
+          console.log('🎯 Reached frame 165, starting automatic progression');
+          startAutoProgression();
+        }
       }
     };
 
@@ -216,7 +282,7 @@ const FrameSequence = () => {
   };
 
   // ============================================================
-  // PHASE C - SCROLL-CONTROLLED EXPERIENCE (frames 164 → 400)
+  // PHASE C - SCROLL-CONTROLLED EXPERIENCE (frames 164 → 1586)
   // Scroll controls frames
   // ============================================================
   const enterScrollMode = () => {
@@ -231,14 +297,14 @@ const FrameSequence = () => {
     setCurrentPhase('scroll-exploration');
     stateRef.current.currentPhase = 'scroll-exploration';
 
-    // Calculate fake scroll space for FULL range (0-400)
+    // Calculate fake scroll space for FULL range (0-1586)
     const viewportHeight = window.innerHeight;
 
     // IMPORTANT: We enter at frame 164, so we need enough space ABOVE to scroll back to frame 0
     // We need EXTRA buffer space to ensure we can keep scrolling even near the top
     const currentFrame = stateRef.current.currentFrame; // Should be 164
     const scrollSpaceForFrames = currentFrame * CONFIG.pixelsPerFrame; // Space needed to scroll back 164 frames
-    const scrollSpaceBelow = (CONFIG.scrollEndFrame - currentFrame) * CONFIG.pixelsPerFrame; // Space needed to scroll to 400
+    const scrollSpaceBelow = (CONFIG.scrollEndFrame - currentFrame) * CONFIG.pixelsPerFrame; // Space needed to scroll to 1586
 
     // Add extra buffer at top to allow comfortable scrolling all the way to frame 0
     // Need LOTS of buffer space to ensure scroll doesn't hit the top before reaching frame 0
@@ -257,7 +323,7 @@ const FrameSequence = () => {
     }
 
     // Calculate where current frame should be in scroll space
-    // We're at frame 164, position ourselves so we can scroll up to 0 or down to 400
+    // We're at frame 164, position ourselves so we can scroll up to 0 or down to 1586
     const scrollPosition = bufferSpace; // Start at the position that allows backward scroll
 
     // Set baseline: we don't use baseline for cinematic mode, frames are controlled directly by scroll events
@@ -278,7 +344,7 @@ const FrameSequence = () => {
     // Scroll to position instantly (this is where frame 164 is)
     window.scrollTo({ top: scrollPosition, behavior: 'instant' });
 
-    console.log('🎯 Phase C active: Scroll now controls frames 0 → 400 (full bidirectional range)');
+    console.log('🎯 Phase C active: Scroll now controls frames 0 → 1586 (full bidirectional range)');
   };
 
   // ============================================================
@@ -630,6 +696,11 @@ const FrameSequence = () => {
       if (stateRef.current.cinematicAnimationId) {
         clearInterval(stateRef.current.cinematicAnimationId);
       }
+
+      // Clean up auto progression interval
+      if (stateRef.current.autoProgressionId) {
+        clearInterval(stateRef.current.autoProgressionId);
+      }
     };
   }, []);
 
@@ -735,12 +806,12 @@ const FrameSequence = () => {
                 background: currentFrameNumber <= 164 ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.3)'
               }}
             />
-            {/* Dot 2: Phase C (Frames 165-400) */}
+            {/* Dot 2: Phase C (Frames 165-1586) */}
             <div
               className="nav-dot"
               style={{
-                height: currentFrameNumber >= 165 && currentFrameNumber <= 400
-                  ? `${8 + ((currentFrameNumber - 165) / 235) * 32}px`
+                height: currentFrameNumber >= 165 && currentFrameNumber <= 1586
+                  ? `${8 + ((currentFrameNumber - 165) / 1421) * 32}px`
                   : '8px',
                 background: currentFrameNumber >= 165 ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.3)'
               }}
