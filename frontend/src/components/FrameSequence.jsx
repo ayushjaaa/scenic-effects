@@ -44,7 +44,7 @@ const FrameSequence = () => {
     boundaryAnimationTimeout: null,
     lastFrameChangeTime: 0, // Track when last frame changed for rate limiting
     cinematicAnimationId: null, // For automatic cinematic progression
-    autoProgressionId: null, // For automatic frame progression after frame 165
+    autoProgressionId: null, // For automatic frame progression after frame 151
   });
 
   // ============================================================
@@ -58,8 +58,8 @@ const FrameSequence = () => {
 
     // Frame ranges - THE TIMELINE
     totalFrames: 1587, // 0-1586 (1587 frames total)
-    autoplayEndFrame: 164, // Phase A: frames 0-164 (autoplay)
-    pauseFrame: 164, // Phase B: pause at 164, button appears
+    autoplayEndFrame: 150, // Phase A: frames 0-150 (autoplay)
+    pauseFrame: 150, // Phase B: pause at 150, button appears
     secondPauseFrame: 436, // Phase D: pause at 436, "Scroll More" text appears
     thirdPauseFrame: 742, // Phase E: pause at 742, "Scroll More" text appears
     fourthPauseFrame: 1024, // Phase F: pause at 1024, "Scroll More" text appears
@@ -122,11 +122,11 @@ const FrameSequence = () => {
   };
 
   // ============================================================
-  // PHASE A - AUTOPLAY (frames 0 → 164)
+  // PHASE A - AUTOPLAY (frames 0 → 150)
   // Time controls frames
   // ============================================================
   const startAutoplay = () => {
-    console.log('🎬 Phase A: Starting autoplay (frames 0 → 164)');
+    console.log('🎬 Phase A: Starting autoplay (frames 0 → 150)');
     setCurrentPhase('autoplay');
     stateRef.current.currentPhase = 'autoplay';
 
@@ -158,14 +158,14 @@ const FrameSequence = () => {
   };
 
   // ============================================================
-  // PHASE B - PAUSE + CTA (frame ~164)
+  // PHASE B - PAUSE + CTA (frame ~150)
   // Frame frozen, button visible, waiting for user action
   // ============================================================
   // This phase is passive - it just waits for button click
-  // The button is shown by the autoplay logic when it reaches frame 164
+  // The button is shown by the autoplay logic when it reaches frame 150
 
   // ============================================================
-  // AUTOMATIC FRAME PROGRESSION - Auto-advance after frame 165 to 436
+  // AUTOMATIC FRAME PROGRESSION - Auto-advance after frame 151 to 436
   // ============================================================
   const startAutoProgression = (direction = 1) => {
     // Stop any existing auto progression
@@ -174,7 +174,7 @@ const FrameSequence = () => {
     }
 
     const frameDuration = 1000 / CONFIG.autoPlayFPS; // 24 FPS
-    console.log(`🎬 Starting automatic frame progression ${direction > 0 ? 'forward (165 → 436)' : 'backward (436 → 165)'}`);
+    console.log(`🎬 Starting automatic frame progression ${direction > 0 ? 'forward (151 → 436)' : 'backward (436 → 151)'}`);
 
     stateRef.current.autoProgressionId = setInterval(() => {
       // Stop if user starts scrolling in opposite direction
@@ -188,7 +188,7 @@ const FrameSequence = () => {
       const currentFrame = Math.round(stateRef.current.currentFrame);
 
       if (direction > 0) {
-        // Forward: 165 → 436
+        // Forward: 151 → 436
         if (currentFrame < CONFIG.secondPauseFrame) {
           const nextFrame = currentFrame + 1;
           displayFrame(nextFrame, true);
@@ -204,19 +204,19 @@ const FrameSequence = () => {
           setShowScrollMoreText(true);
         }
       } else {
-        // Backward: 436 → 165
-        if (currentFrame > 165) {
+        // Backward: 436 → 151
+        if (currentFrame > 151) {
           const nextFrame = currentFrame - 1;
           displayFrame(nextFrame, true);
           stateRef.current.currentFrame = nextFrame;
           stateRef.current.targetFrame = nextFrame;
         } else {
-          // Reached frame 165, stop and pause
+          // Reached frame 151, stop and pause
           clearInterval(stateRef.current.autoProgressionId);
           stateRef.current.autoProgressionId = null;
-          console.log('⏸️ Reverse progression paused at frame 165 - at boundary');
-          setCurrentPhase('paused-at-164');
-          stateRef.current.currentPhase = 'paused-at-164';
+          console.log('⏸️ Reverse progression paused at frame 151 - at boundary');
+          setCurrentPhase('paused-at-150');
+          stateRef.current.currentPhase = 'paused-at-150';
           // Don't show button again, just pause
         }
       }
@@ -434,7 +434,7 @@ const FrameSequence = () => {
     const currentFrame = Math.round(stateRef.current.currentFrame);
 
     // Define all pause boundaries
-    const pauseBoundaries = [164, 436, 742, 1024, 1301, 1577];
+    const pauseBoundaries = [150, 436, 742, 1024, 1301, 1577];
 
     // Determine which zone we're in and target boundary
     let targetBoundary = null;
@@ -475,9 +475,9 @@ const FrameSequence = () => {
     if (currentFrame === targetBoundary) {
       console.log('📍 Already at boundary:', targetBoundary);
 
-      // If we're at frame 165, start automatic progression
+      // If we're at frame 151, start automatic progression
       if (currentFrame === CONFIG.autoplayEndFrame + 1) {
-        console.log('🎯 At frame 165, starting automatic progression');
+        console.log('🎯 At frame 151, starting automatic progression');
         startAutoProgression();
       }
       return;
@@ -512,7 +512,7 @@ const FrameSequence = () => {
         console.log(`✅ Reached boundary at frame ${targetBoundary}`);
 
         // Handle pause points based on which boundary we reached
-        if (targetBoundary === 164) {
+        if (targetBoundary === 150) {
           setCurrentPhase('paused');
           stateRef.current.currentPhase = 'paused';
         } else if (targetBoundary === 436) {
@@ -535,9 +535,9 @@ const FrameSequence = () => {
           setCurrentPhase('paused-at-1577');
           stateRef.current.currentPhase = 'paused-at-1577';
           setShowScrollMoreText1577(true);
-        } else if (targetBoundary === 165) {
-          // Forward scroll to 165 starts auto progression
-          console.log('🎯 Reached frame 165, starting automatic progression');
+        } else if (targetBoundary === 151) {
+          // Forward scroll to 151 starts auto progression
+          console.log('🎯 Reached frame 151, starting automatic progression');
           startAutoProgression();
         }
       }
@@ -547,7 +547,7 @@ const FrameSequence = () => {
   };
 
   // ============================================================
-  // PHASE C - SCROLL-CONTROLLED EXPERIENCE (frames 164 → 1586)
+  // PHASE C - SCROLL-CONTROLLED EXPERIENCE (frames 150 → 1586)
   // Scroll controls frames
   // ============================================================
   const enterScrollMode = () => {
@@ -565,10 +565,10 @@ const FrameSequence = () => {
     // Calculate fake scroll space for FULL range (0-1586)
     const viewportHeight = window.innerHeight;
 
-    // IMPORTANT: We enter at frame 164, so we need enough space ABOVE to scroll back to frame 0
+    // IMPORTANT: We enter at frame 150, so we need enough space ABOVE to scroll back to frame 0
     // We need EXTRA buffer space to ensure we can keep scrolling even near the top
-    const currentFrame = stateRef.current.currentFrame; // Should be 164
-    const scrollSpaceForFrames = currentFrame * CONFIG.pixelsPerFrame; // Space needed to scroll back 164 frames
+    const currentFrame = stateRef.current.currentFrame; // Should be 150
+    const scrollSpaceForFrames = currentFrame * CONFIG.pixelsPerFrame; // Space needed to scroll back 150 frames
     const scrollSpaceBelow = (CONFIG.scrollEndFrame - currentFrame) * CONFIG.pixelsPerFrame; // Space needed to scroll to 1586
 
     // Add extra buffer at top to allow comfortable scrolling all the way to frame 0
@@ -588,7 +588,7 @@ const FrameSequence = () => {
     }
 
     // Calculate where current frame should be in scroll space
-    // We're at frame 164, position ourselves so we can scroll up to 0 or down to 1586
+    // We're at frame 150, position ourselves so we can scroll up to 0 or down to 1586
     const scrollPosition = bufferSpace; // Start at the position that allows backward scroll
 
     // Set baseline: we don't use baseline for cinematic mode, frames are controlled directly by scroll events
@@ -606,7 +606,7 @@ const FrameSequence = () => {
       pixelsPerFrame: CONFIG.pixelsPerFrame
     });
 
-    // Scroll to position instantly (this is where frame 164 is)
+    // Scroll to position instantly (this is where frame 150 is)
     window.scrollTo({ top: scrollPosition, behavior: 'instant' });
 
     console.log('🎯 Phase C active: Scroll now controls frames 0 → 1586 (full bidirectional range)');
@@ -836,7 +836,7 @@ const FrameSequence = () => {
       setIsAudioPlaying(true);
     }
 
-    // Enter scroll mode immediately at current frame (164)
+    // Enter scroll mode immediately at current frame (150)
     enterScrollMode();
   };
 
@@ -981,7 +981,7 @@ const FrameSequence = () => {
           }
 
           // When enough frames loaded, start experience
-          if (loadedCount === CONFIG.autoplayEndFrame + 1) { // Load frames 0-164
+          if (loadedCount === CONFIG.autoplayEndFrame + 1) { // Load frames 0-150
             console.log('✅ Initial frames loaded, ready to start');
             stateRef.current.isReady = true;
 
@@ -1218,24 +1218,24 @@ const FrameSequence = () => {
         {/* Navigation Dots */}
         {!isLoading && (
           <div className="nav-dots">
-            {/* Dot 1: Phase A+B (Frames 0-164) */}
+            {/* Dot 1: Phase A+B (Frames 0-150) */}
             <div
               className="nav-dot"
               style={{
-                height: currentFrameNumber >= 0 && currentFrameNumber <= 164
-                  ? `${8 + (currentFrameNumber / 164) * 32}px`
-                  : currentFrameNumber > 164 ? '40px' : '8px',
-                background: currentFrameNumber <= 164 ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.3)'
+                height: currentFrameNumber >= 0 && currentFrameNumber <= 150
+                  ? `${8 + (currentFrameNumber / 150) * 32}px`
+                  : currentFrameNumber > 150 ? '40px' : '8px',
+                background: currentFrameNumber <= 150 ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.3)'
               }}
             />
-            {/* Dot 2: Phase C (Frames 165-1586) */}
+            {/* Dot 2: Phase C (Frames 151-1586) */}
             <div
               className="nav-dot"
               style={{
-                height: currentFrameNumber >= 165 && currentFrameNumber <= 1586
-                  ? `${8 + ((currentFrameNumber - 165) / 1421) * 32}px`
+                height: currentFrameNumber >= 151 && currentFrameNumber <= 1586
+                  ? `${8 + ((currentFrameNumber - 151) / 1421) * 32}px`
                   : '8px',
-                background: currentFrameNumber >= 165 ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.3)'
+                background: currentFrameNumber >= 151 ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.3)'
               }}
             />
           </div>
