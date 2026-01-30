@@ -1110,6 +1110,17 @@ const FrameSequence = () => {
         {showScrollMoreText && currentPhase === 'paused-at-436' && (
           <div className="scroll-more-content">
             <p className="scroll-more-text">Scroll More</p>
+            <div className="scroll-arrows">
+              <svg className="arrow arrow-1" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+              <svg className="arrow arrow-2" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+              <svg className="arrow arrow-3" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </div>
           </div>
         )}
 
@@ -1117,6 +1128,17 @@ const FrameSequence = () => {
         {showScrollMoreText742 && currentPhase === 'paused-at-742' && (
           <div className="scroll-more-content">
             <p className="scroll-more-text">Scroll More</p>
+            <div className="scroll-arrows">
+              <svg className="arrow arrow-1" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+              <svg className="arrow arrow-2" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+              <svg className="arrow arrow-3" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </div>
           </div>
         )}
 
@@ -1124,6 +1146,17 @@ const FrameSequence = () => {
         {showScrollMoreText1024 && currentPhase === 'paused-at-1024' && (
           <div className="scroll-more-content">
             <p className="scroll-more-text">Scroll More</p>
+            <div className="scroll-arrows">
+              <svg className="arrow arrow-1" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+              <svg className="arrow arrow-2" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+              <svg className="arrow arrow-3" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </div>
           </div>
         )}
 
@@ -1131,6 +1164,17 @@ const FrameSequence = () => {
         {showScrollMoreText1301 && currentPhase === 'paused-at-1301' && (
           <div className="scroll-more-content">
             <p className="scroll-more-text">Scroll More</p>
+            <div className="scroll-arrows">
+              <svg className="arrow arrow-1" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+              <svg className="arrow arrow-2" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+              <svg className="arrow arrow-3" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </div>
           </div>
         )}
 
@@ -1138,6 +1182,17 @@ const FrameSequence = () => {
         {showScrollMoreText1577 && currentPhase === 'paused-at-1577' && (
           <div className="scroll-more-content">
             <p className="scroll-more-text">Scroll More</p>
+            <div className="scroll-arrows">
+              <svg className="arrow arrow-1" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+              <svg className="arrow arrow-2" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+              <svg className="arrow arrow-3" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </div>
           </div>
         )}
 

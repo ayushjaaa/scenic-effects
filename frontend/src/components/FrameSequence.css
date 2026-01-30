@@ -258,12 +258,15 @@
 /* Scroll More Content - Frame 436 Pause */
 .scroll-more-content {
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  bottom: 0;
+  left: 0;
+  width: 100%;
   z-index: 10;
   text-align: center;
   animation: fadeIn 0.8s ease-out;
+  transition: all 0.3s ease;
+  padding: 3rem 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.4) 50%, rgba(0, 0, 0, 0.8) 100%);
 }
 
 .scroll-more-text {
@@ -542,5 +545,48 @@
   .audio-icon svg {
     width: 20px;
     height: 20px;
+  }
+}
+
+/* Scroll Arrows - Animated Downward Arrows */
+.scroll-arrows {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0px;
+  margin-top: 1.5rem;
+}
+
+.scroll-arrows .arrow {
+  color: white;
+  opacity: 0;
+  animation: arrowFadeIn 1.5s ease-in-out infinite;
+  margin: -10px 0;
+}
+
+.scroll-arrows .arrow-1 {
+  animation-delay: 0s;
+}
+
+.scroll-arrows .arrow-2 {
+  animation-delay: 0.2s;
+}
+
+.scroll-arrows .arrow-3 {
+  animation-delay: 0.4s;
+}
+
+@keyframes arrowFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(0px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(5px);
   }
 }
