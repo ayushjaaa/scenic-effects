@@ -1,0 +1,166 @@
+/* Pantheon Section */
+.pantheon-section {
+  position: relative;
+  width: 100%;
+  max-width: 100vw;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* First Div - Text Container */
+.pantheon-text-container {
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  padding-bottom: 40px;
+  min-height: 50vh;
+  background: #4a3621;
+}
+
+.pantheon-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  text-align: center;
+}
+
+.pantheon-header-title {
+  font-size: clamp(1.25rem, 2.5vw, 2rem);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.pantheon-header-subtitle {
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 400;
+  margin: 0;
+  letter-spacing: 0.02em;
+}
+
+/* Second Div - Image Container with Background */
+.pantheon-image-container {
+  width: 100%;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #4a3621;
+}
+
+.pantheon-image-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('https://prelaunch-rotoris.s3.ap-south-1.amazonaws.com/public/assets/products/monarch/pantheon.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  mix-blend-mode: screen;
+  opacity: 0.9;
+}
+
+/* Text at Bottom of Image Container */
+.pantheon-bottom-text {
+  width: 100%;
+  padding: 40px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pantheon-description {
+  font-size: clamp(0.875rem, 1.5vw, 1.125rem);
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 400;
+  margin: 0;
+  letter-spacing: 0.02em;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.pantheon-title {
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  line-height: 1.4;
+  color: #fff;
+  font-weight: 500;
+  margin: 0;
+  letter-spacing: 0.02em;
+}
+
+/* Responsive Design */
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .pantheon-text-container {
+    min-height: 40vh;
+    padding: 50px 40px;
+  }
+
+  .pantheon-image-container {
+    min-height: 70vh;
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .pantheon-text-container {
+    min-height: 40vh;
+    padding: 40px 24px;
+  }
+
+  .pantheon-text {
+    font-size: clamp(1.25rem, 4vw, 1.75rem);
+  }
+
+  .pantheon-image-container {
+    min-height: 50vh;
+  }
+
+  .pantheon-bottom-text {
+    padding: 30px 20px;
+  }
+
+  .pantheon-bottom-text p {
+    font-size: clamp(1rem, 4vw, 1.5rem);
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .pantheon-text-container {
+    padding: 30px 20px;
+  }
+
+  .pantheon-text {
+    font-size: 1.125rem;
+  }
+
+  .pantheon-bottom-text {
+    padding: 20px 16px;
+  }
+
+  .pantheon-bottom-text p {
+    font-size: 1rem;
+  }
+}

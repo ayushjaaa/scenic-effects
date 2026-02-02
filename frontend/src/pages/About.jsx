@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import HeroSection from '../components/HeroSection';
 import ContactForm from '../components/ContactForm';
 import './About.css';
 
@@ -36,20 +37,13 @@ const About = () => {
   return (
     <div className="about-page">
       {/* Hero Header Section with Background Video and Gradient */}
-      <header className="about-header">
-        <video
-          className="about-header-video"
-          src="https://vod.api.video/vod/vi43oLt7gV47CNleHg4eUxrA/mp4/source.mp4"
-          autoPlay
-          muted
-          loop
-          playsInline
-        />
-        <div className="about-header-content">
-          <h1 className="about-title">About Rotoris</h1>
-          <p className="about-subtitle">Become More</p>
-        </div>
-      </header>
+      <HeroSection
+        videoUrl="https://vod.api.video/vod/vi43oLt7gV47CNleHg4eUxrA/mp4/source.mp4"
+        title="About Rotoris"
+        subtitle="Become More"
+        gradientColor="#4A3621"
+        className="about-header"
+      />
 
       {/* Second Section - IDEATION */}
       <section ref={ideationSectionRef} className="ideation-section">

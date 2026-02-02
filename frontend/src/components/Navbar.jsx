@@ -36,7 +36,7 @@ const Navbar = () => {
     {
       id: 3,
       title: 'Features',
-      path: '/about',
+      path: '/features',
       image: 'https://prelaunch-rotoris.s3.ap-south-1.amazonaws.com/public/assets/monarch_h.webp'
     },
     {

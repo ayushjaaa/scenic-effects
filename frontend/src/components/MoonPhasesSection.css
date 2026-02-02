@@ -1,0 +1,269 @@
+/* Moon Phases Section */
+.moon-phases-section {
+  position: relative;
+  width: 100%;
+  max-width: 100vw;
+  min-height: 100vh;
+  background: #4a3621;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  overflow-x: hidden;
+  overflow-y: visible;
+  box-sizing: border-box;
+}
+
+/* Cloud Images */
+.cloud-image {
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  mix-blend-mode: screen;
+  opacity: 0.8;
+  filter: brightness(1.1) contrast(1.1);
+}
+
+.cloud-1 {
+  top: 5%;
+  left: 2%;
+  width: clamp(200px, 20vw, 350px);
+  height: auto;
+  max-width: calc(100vw - 4%);
+}
+
+.cloud-2 {
+  top: 15%;
+  right: 2%;
+  width: clamp(180px, 18vw, 300px);
+  height: auto;
+  max-width: calc(100vw - 4%);
+}
+
+.cloud-3 {
+  bottom: 15%;
+  left: 2%;
+  width: clamp(160px, 18vw, 280px);
+  height: auto;
+  max-width: calc(100vw - 4%);
+}
+
+.cloud-4 {
+  bottom: 15%;
+  right: 2%;
+  width: clamp(150px, 18vw, 280px);
+  height: auto;
+  max-width: calc(100vw - 4%);
+}
+
+
+/* Content Container */
+.moon-phases-content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 60px;
+}
+
+/* Moon Phases Image Container */
+.moon-phases-image-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.moon-phases-image {
+  width: 100%;
+  max-width: 800px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 40px rgba(0, 0, 0, 0.3));
+}
+
+/* Text Content */
+.moon-phases-text {
+  width: 100%;
+  max-width: 1000px;
+  text-align: center;
+  padding: 0 40px;
+}
+
+.moon-phases-description {
+  font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 300;
+  margin: 0;
+  letter-spacing: 0.02em;
+}
+
+.moon-phases-description strong {
+  font-weight: 600;
+  color: #fff;
+}
+
+/* CTA Button Container */
+.moon-phases-cta {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.join-waitlist-button {
+  background-color: rgba(45, 34, 26, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 16px 40px;
+  font-size: 1.125rem;
+  font-weight: 400;
+  cursor: pointer;
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  letter-spacing: 0.02em;
+}
+
+.join-waitlist-button:hover {
+  background-color: rgba(45, 34, 26, 1);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.join-waitlist-button:active {
+  transform: translateY(0);
+}
+
+.dropdown-icon {
+  transition: transform 0.3s ease;
+}
+
+.join-waitlist-button:hover .dropdown-icon {
+  transform: translateY(2px);
+}
+
+/* Responsive Design */
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .moon-phases-section {
+    padding: 60px 40px;
+  }
+
+  .moon-phases-content {
+    gap: 50px;
+  }
+
+  .moon-phases-image {
+    max-width: 700px;
+  }
+
+  .moon-phases-text {
+    max-width: 800px;
+  }
+
+  .moon-phases-description {
+    font-size: clamp(1.125rem, 2.5vw, 1.5rem);
+  }
+
+  .join-waitlist-button {
+    padding: 14px 36px;
+    font-size: 1.0625rem;
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .moon-phases-section {
+    padding: 60px 24px;
+    min-height: auto;
+  }
+
+  .moon-phases-content {
+    gap: 40px;
+  }
+
+  .moon-phases-image {
+    max-width: 100%;
+  }
+
+  .moon-phases-text {
+    max-width: 100%;
+    padding: 0 20px;
+  }
+
+  .moon-phases-description {
+    font-size: clamp(1rem, 4vw, 1.25rem);
+    line-height: 1.5;
+  }
+
+  .join-waitlist-button {
+    padding: 14px 32px;
+    font-size: 1rem;
+  }
+
+  /* Cloud positioning for mobile */
+  .cloud-1 {
+    top: 2%;
+    left: 2%;
+    width: clamp(120px, 30vw, 200px);
+  }
+
+  .cloud-2 {
+    top: 10%;
+    right: 2%;
+    width: clamp(100px, 28vw, 180px);
+  }
+
+  .cloud-3 {
+    top: 50%;
+    left: 5%;
+    width: clamp(100px, 25vw, 160px);
+  }
+
+  .cloud-4 {
+    bottom: 5%;
+    right: 5%;
+    width: clamp(100px, 25vw, 150px);
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .moon-phases-section {
+    padding: 40px 20px;
+  }
+
+  .moon-phases-content {
+    gap: 32px;
+  }
+
+  .moon-phases-text {
+    padding: 0 10px;
+  }
+
+  .moon-phases-description {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  .join-waitlist-button {
+    padding: 12px 28px;
+    font-size: 0.9375rem;
+    gap: 8px;
+  }
+
+  .dropdown-icon {
+    width: 14px;
+    height: 14px;
+  }
+}
