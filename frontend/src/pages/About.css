@@ -1,0 +1,1053 @@
+/* About Page Styles */
+
+.about-page {
+  min-height: 100vh;
+  background-color: #000;
+  overflow-x: hidden;
+}
+
+/* Hero Header Section - Full Viewport Height */
+.about-header {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #000;
+}
+
+/* Background Video */
+.about-header-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+/* Gradient Overlay - Coming from bottom upward with smooth transition */
+.about-header::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 30vh;
+  background: linear-gradient(
+    to top,
+    #4A3621 0%,
+    #4A3621 20%,
+    rgba(74, 54, 33, 0.85) 35%,
+    rgba(74, 54, 33, 0.7) 50%,
+    rgba(74, 54, 33, 0.5) 65%,
+    rgba(74, 54, 33, 0.3) 80%,
+    rgba(74, 54, 33, 0.1) 90%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Header Content */
+.about-header-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  color: white;
+  padding: 0 20px;
+  max-width: 1200px;
+  margin-top: 60vh;
+}
+
+.about-title {
+  font-size: clamp(1.5rem, 4vw, 3rem);
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  animation: fadeInUp 1s ease-out;
+}
+
+.about-subtitle {
+  font-size: clamp(0.875rem, 1.5vw, 1.25rem);
+  font-weight: 300;
+  letter-spacing: 0.1em;
+  opacity: 0.9;
+  animation: fadeInUp 1s ease-out 0.3s backwards;
+}
+
+/* Second Section - IDEATION */
+.ideation-section {
+  position: relative;
+  width: 100%;
+  min-height: 500vh; /* Taller section to allow more scrolling and content */
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+/* Background Layer - Will be pinned */
+.ideation-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background-image: url('https://prelaunch-rotoris.s3.ap-south-1.amazonaws.com/public/assets/products/Arvion/Arvion_desktop.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 0;
+}
+
+/* Gradient overlay from top */
+.ideation-background::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 10vh;
+  background: linear-gradient(
+    to bottom,
+    #493621 0%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Content Wrapper - Flex Column */
+.ideation-content-wrapper {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 10rem;
+  width: 100%;
+}
+
+/* Two-column grid container */
+.ideation-container {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1400px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 40px clamp(40px, 8vw, 200px);
+  display: grid;
+  grid-template-columns: 45% 1fr;
+  gap: clamp(10px, 2vw, 40px);
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+/* Reversed layout - Image left, Text right */
+.ideation-container-reverse {
+  grid-template-columns: 1fr 45%;
+  align-items: flex-start;
+  padding-top: 0;
+  margin-top: clamp(-60px, -4vw, -40px);
+  min-height: 60vh;
+}
+
+/* Left Text Block */
+.ideation-text {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ideation-label {
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.ideation-heading {
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  font-weight: 600;
+  line-height: 1.2;
+  color: #fff;
+  letter-spacing: -0.02em;
+  margin: 0;
+  padding: 0;
+}
+
+.ideation-description {
+  font-size: clamp(1rem, 2vw, 1.375rem);
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 300;
+  margin: 0;
+  padding: 0;
+}
+
+.ideation-description strong {
+  font-weight: 500;
+  color: #fff;
+}
+
+/* Right Visual Block */
+.ideation-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+
+.image-container {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  transform: translateY(-15%);
+}
+
+.speedometer-image {
+  position: relative;
+  width: clamp(200px, 18vw, 255px);
+  max-height: 70vh;
+  height: auto;
+  border-radius: 12px;
+  display: block;
+  object-fit: contain;
+  z-index: 1;
+}
+
+.sketch-overlay {
+  position: absolute;
+  bottom: clamp(-200px, -12vw, -180px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: clamp(65%, 70%, 75%);
+  max-height: 45vh;
+  height: auto;
+  z-index: 100;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.3));
+}
+
+/* Sketch overlay positioned at top for reverse container */
+.sketch-overlay-top {
+  top: clamp(-160px, -10vw, -140px);
+  bottom: auto;
+  left: clamp(-30px, -2vw, -20px);
+  transform: none;
+  width: clamp(65%, 70%, 75%);
+}
+
+/* Sketch overlay positioned at bottom for reverse container */
+.sketch-overlay-bottom {
+  position: absolute;
+  bottom: clamp(-200px, -12vw, -180px);
+  top: auto;
+  left: clamp(-30px, -2vw, -20px);
+  transform: none;
+  width: clamp(65%, 70%, 75%);
+  max-height: 45vh;
+  height: auto;
+  z-index: 0;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.3));
+}
+
+/* Technical Specifications Container */
+.specs-container {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1600px;
+  min-height: auto;
+  margin: 0 auto;
+  padding: 40px clamp(40px, 5vw, 100px);
+  display: flex;
+  flex-direction: row;
+  gap: clamp(40px, 10vw, 170px);
+  align-items: flex-start;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.spec-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.spec-title {
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+}
+
+.spec-value {
+  font-size: clamp(1rem, 2vw, 1.375rem);
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+}
+
+.spec-subvalue {
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+}
+
+/* Key Materials Section */
+.materials-section {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1400px;
+  margin: 80px auto 0;
+  padding: 40px clamp(40px, 8vw, 200px);
+  display: flex;
+  flex-direction: column;
+  gap: 60px;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+/* Gradient overlay from bottom for materials section */
+.materials-section::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  width: 100vw;
+  height: 30vh;
+  background: linear-gradient(
+    to top,
+    #020201 0%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: -1;
+}
+
+.materials-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.materials-title {
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+}
+
+.materials-subtitle {
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0;
+  max-width: 500px;
+}
+
+.materials-grid {
+  display: flex;
+  flex-direction: row;
+  gap: clamp(40px, 6vw, 80px);
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.material-item {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.material-image-placeholder {
+  width: 200px;
+  height: 200px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.material-image {
+  width: clamp(160px, 14vw, 200px);
+  height: clamp(160px, 14vw, 200px);
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.material-add-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.9);
+  border: none;
+  color: #000;
+  font-size: 20px;
+  font-weight: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+  line-height: 1;
+}
+
+.material-add-icon:hover {
+  background-color: #fff;
+  transform: scale(1.1);
+}
+
+.material-name {
+  font-size: clamp(0.875rem, 1.5vw, 1.125rem);
+  font-weight: 400;
+  color: #fff;
+  text-align: center;
+  margin: 0;
+}
+
+/* Design Story Section */
+.design-story-section {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 40px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 60px;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  background-color: #000;
+}
+
+.design-story-text-container {
+  width: 100%;
+  padding: 0 clamp(40px, 10vw, 200px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.design-story-text {
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  line-height: 1.4;
+  color: #fff;
+  font-weight: 300;
+  text-align: center;
+  margin: 0;
+  max-width: 1000px;
+}
+
+.design-story-image-container {
+  position: relative;
+  width: 100vw;
+  height: 90vh;
+  min-height: 90vh;
+  background-color: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+}
+
+.design-story-video {
+  width: 120%;
+  height: 120%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Drive of the Future Section */
+.drive-future-section {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  height: 100vh;
+  background-image: url('https://prelaunch-rotoris.s3.ap-south-1.amazonaws.com/public/assets/products/Arvion/Arvion-watch-silhouette-desk.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: scroll;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  z-index: 2;
+  margin: 0;
+  padding: 0;
+}
+
+.drive-future-icons {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+
+.drive-future-icon {
+  width: 22px;
+  height: 34px;
+  opacity: 0.9;
+}
+
+.drive-future-text {
+  font-size: clamp(1.5rem, 3.5vw, 2.5rem);
+  font-weight: 600;
+  line-height: 1.2;
+  color: #fff;
+  text-align: center;
+  margin: 0;
+  padding: 0 clamp(60px, 20vw, 440px);
+  max-width: 1400px;
+  letter-spacing: -0.02em;
+}
+
+/* Waitlist Form Section */
+.waitlist-section {
+  position: relative;
+  z-index: 10;
+  min-height: 100vh;
+  background-color: #000;
+  padding: 100px 60px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  margin: 0;
+  margin-top: -1px;
+}
+
+.waitlist-container {
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  gap: 80px;
+  align-items: center;
+}
+
+/* Form Column */
+.waitlist-form-column {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  width: 100%;
+  max-width: 550px;
+}
+
+.waitlist-title {
+  font-size: clamp(1.75rem, 3.5vw, 2.75rem);
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.2;
+  margin: 0;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+.waitlist-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.form-group-half {
+  width: 100%;
+}
+
+.form-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.form-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  opacity: 0.5;
+  margin-bottom: 12px;
+}
+
+.form-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  font-size: 1rem;
+  padding: 12px 0;
+  outline: none;
+  transition: border-color 0.3s ease;
+  font-family: inherit;
+  flex: 1;
+}
+
+.form-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.form-input:focus {
+  border-bottom-color: rgba(255, 255, 255, 0.8);
+}
+
+.submit-button {
+  width: 100%;
+  background-color: #2d4a3e;
+  color: rgba(255, 255, 255, 0.8);
+  border: none;
+  padding: 18px 32px;
+  font-size: 1.125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 16px;
+  border-radius: 4px;
+}
+
+.submit-button:hover {
+  background-color: #3a5d4e;
+}
+
+.form-consent {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-top: 8px;
+}
+
+.consent-checkbox {
+  margin-top: 4px;
+  cursor: pointer;
+  min-width: 16px;
+  min-height: 16px;
+}
+
+.consent-label {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.6;
+}
+
+.consent-label a {
+  color: #fff;
+  text-decoration: underline;
+}
+
+/* Footer Content Column */
+.waitlist-footer-column {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  align-items: center;
+  width: 100%;
+}
+
+.back-to-top {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  padding: 12px 32px;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 30px;
+  transition: all 0.3s ease;
+}
+
+.back-to-top:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.social-links {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.social-icon {
+  width: 48px;
+  height: 48px;
+  background-color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  color: #000;
+}
+
+.social-icon:hover {
+  transform: scale(1.1);
+  background-color: #2d4a3e;
+  color: #fff;
+}
+
+.copyright {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+  line-height: 1.6;
+  text-align: center;
+}
+
+/* Fade In Animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design for Different Laptop Sizes */
+
+/* Small Laptops (12-13 inch screens, 1280px - 1440px) */
+@media screen and (min-width: 1024px) and (max-width: 1440px) {
+  .ideation-container {
+    padding: 40px clamp(60px, 6vw, 120px);
+    gap: 20px;
+  }
+
+  .speedometer-image {
+    width: clamp(200px, 18vw, 255px);
+  }
+
+  .specs-container {
+    gap: clamp(60px, 8vw, 120px);
+  }
+
+  .materials-grid {
+    gap: clamp(50px, 5vw, 70px);
+  }
+
+  .material-image {
+    width: clamp(160px, 14vw, 200px);
+    height: clamp(160px, 14vw, 200px);
+  }
+
+  .drive-future-text {
+    padding: 0 clamp(80px, 15vw, 300px);
+  }
+}
+
+/* Standard Laptops (14-16 inch screens, 1440px - 1920px) */
+@media screen and (min-width: 1441px) and (max-width: 1920px) {
+  .ideation-container {
+    padding: 40px clamp(120px, 8vw, 180px);
+  }
+
+  .specs-container {
+    gap: clamp(100px, 10vw, 150px);
+  }
+
+  .materials-section {
+    padding: 40px clamp(120px, 8vw, 180px);
+  }
+
+  .drive-future-section {
+    height: 100vh;
+    min-height: 100vh;
+    margin-bottom: 0;
+  }
+
+  .drive-future-text {
+    padding: 0 clamp(200px, 18vw, 400px);
+  }
+
+  .waitlist-section {
+    margin-top: 0;
+  }
+}
+
+/* Large Monitors (> 1920px) */
+@media screen and (min-width: 1921px) {
+  .ideation-container {
+    max-width: 1600px;
+    padding: 40px 200px;
+  }
+
+  .specs-container {
+    max-width: 1800px;
+    gap: 170px;
+  }
+
+  .materials-section {
+    max-width: 1600px;
+    padding: 40px 200px;
+  }
+
+  .design-story-text {
+    max-width: 1200px;
+  }
+
+  .drive-future-text {
+    padding: 0 440px;
+    max-width: 1600px;
+  }
+
+  .waitlist-container {
+    max-width: 1000px;
+  }
+}
+
+/* Specific fix for 1700px width */
+@media screen and (min-width: 1650px) and (max-width: 1750px) {
+  .drive-future-section {
+    height: 100vh;
+    min-height: 100vh;
+  }
+
+  .waitlist-section {
+    margin-top: 0;
+    padding-top: 100px;
+  }
+
+  .design-story-section {
+    margin-bottom: 0;
+  }
+}
+
+/* Very Small Laptops (< 1280px but > tablet) */
+@media screen and (min-width: 769px) and (max-width: 1023px) {
+  .ideation-container {
+    padding: 40px clamp(40px, 5vw, 80px);
+    gap: 20px;
+  }
+
+  .speedometer-image {
+    width: clamp(180px, 20vw, 220px);
+  }
+
+  .specs-container {
+    gap: clamp(30px, 6vw, 60px);
+    flex-wrap: wrap;
+  }
+
+  .materials-grid {
+    gap: 40px;
+  }
+
+  .material-image {
+    width: 150px;
+    height: 150px;
+  }
+
+  .drive-future-text {
+    padding: 0 clamp(40px, 10vw, 120px);
+    font-size: clamp(1.25rem, 3vw, 2rem);
+  }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .about-page {
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  .about-header {
+    background-position: center;
+  }
+
+  .about-header::before {
+    height: 20vh;
+    background: linear-gradient(
+      to top,
+      #4A3621 0%,
+      #4A3621 25%,
+      rgba(74, 54, 33, 0.8) 45%,
+      rgba(74, 54, 33, 0.5) 70%,
+      rgba(74, 54, 33, 0.2) 85%,
+      transparent 100%
+    );
+  }
+
+  .about-header-video {
+    object-fit: cover;
+  }
+
+  /* IDEATION Section - Mobile */
+  .ideation-section {
+    height: 100vh;
+    padding: 40px 24px;
+    overflow: hidden;
+    box-sizing: border-box;
+    width: 100%;
+  }
+
+  .ideation-container {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .ideation-text {
+    gap: 16px;
+  }
+
+  .ideation-heading {
+    font-size: clamp(1.25rem, 5vw, 1.75rem);
+  }
+
+  .ideation-description {
+    font-size: clamp(0.875rem, 3vw, 1rem);
+  }
+
+  .image-container {
+    max-width: 100%;
+    padding: 20px 20px 10px 10px;
+  }
+
+  .speedometer-image {
+    max-height: 40vh;
+  }
+
+  .sketch-overlay {
+    top: 0;
+    right: 0;
+    width: 55%;
+    max-height: 30vh;
+  }
+
+  /* Design Story Section - Mobile */
+  .design-story-section {
+    padding: 40px 0;
+    margin: 0;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+  }
+
+  .design-story-text-container {
+    padding: 0 24px;
+  }
+
+  .design-story-text {
+    font-size: clamp(1.25rem, 5vw, 1.75rem);
+  }
+
+  .design-story-image-container {
+    width: 100vw;
+    height: 75vh;
+    min-height: 75vh;
+    margin: 0;
+  }
+
+  /* Drive of the Future Section - Mobile */
+  .drive-future-section {
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    padding: 40px 20px;
+    min-height: 80vh;
+    height: auto;
+    margin-top: 0;
+    margin-bottom: 0;
+    box-sizing: border-box;
+  }
+
+  .drive-future-text {
+    padding: 0 20px;
+    font-size: clamp(1.25rem, 5vw, 1.75rem);
+  }
+
+  .drive-future-icons {
+    width: 100%;
+    padding: 0;
+  }
+
+  /* Waitlist Section - Mobile */
+  .waitlist-section {
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    padding: 60px 20px;
+    margin-top: 0;
+    margin-bottom: 0;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+
+  .waitlist-container {
+    gap: 60px;
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  .waitlist-form-column {
+    width: 100%;
+    max-width: 100%;
+    align-items: center;
+  }
+
+  .waitlist-title {
+    font-size: clamp(1.5rem, 6vw, 2rem);
+    text-align: center;
+  }
+
+  .waitlist-form {
+    width: 100%;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .waitlist-footer-column {
+    width: 100%;
+    align-items: center;
+  }
+
+  .social-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .back-to-top {
+    padding: 10px 24px;
+    font-size: 0.875rem;
+  }
+}
