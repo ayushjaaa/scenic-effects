@@ -13,7 +13,10 @@ const About = () => {
     const section = ideationSectionRef.current;
     const background = backgroundRef.current;
 
-    if (section && background) {
+    // Only apply pinning on desktop (width > 768px)
+    const isMobile = window.innerWidth <= 768;
+
+    if (section && background && !isMobile) {
       // Pin the background image when section reaches top
       ScrollTrigger.create({
         trigger: section,

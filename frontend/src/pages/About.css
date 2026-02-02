@@ -908,11 +908,18 @@
 
   /* IDEATION Section - Mobile */
   .ideation-section {
-    height: 100vh;
+    min-height: auto;
+    height: auto;
     padding: 40px 24px;
-    overflow: hidden;
+    overflow: visible;
     box-sizing: border-box;
     width: 100%;
+  }
+
+  /* Disable background pinning on mobile */
+  .ideation-background {
+    position: relative;
+    height: 50vh;
   }
 
   .ideation-container {
@@ -1006,6 +1013,10 @@
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
+    position: relative;
+    z-index: 100;
+    display: flex;
+    min-height: auto;
   }
 
   .waitlist-container {
