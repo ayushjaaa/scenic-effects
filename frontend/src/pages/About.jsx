@@ -13,18 +13,17 @@ const About = () => {
     const section = ideationSectionRef.current;
     const background = backgroundRef.current;
 
-    // Only apply pinning on desktop (width > 768px)
-    const isMobile = window.innerWidth <= 768;
+    if (section && background) {
+      const isMobile = window.innerWidth <= 768;
 
-    if (section && background && !isMobile) {
       // Pin the background image when section reaches top
       ScrollTrigger.create({
         trigger: section,
         start: 'top top',
-        end: '+=400%', // Pin for 4x viewport height to allow more content to scroll
+        end: isMobile ? '+=300%' : '+=400%', // Adjust pin duration for mobile
         pin: background,
         pinSpacing: false,
-        markers: false, // Set to true for debugging
+        markers: false,
       });
     }
 
