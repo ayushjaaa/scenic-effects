@@ -4,3 +4,294 @@
   background-color: #4a3621;
   overflow-x: hidden;
 }
+
+/* Key Materials Section */
+.key-materials-section {
+  position: relative;
+  z-index: 20;
+  width: 100%;
+  margin: -8px 0 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 60px;
+  align-items: center;
+  box-sizing: border-box;
+  background-color: #211609;
+  overflow: hidden;
+}
+
+/* Gradient overlay from bottom for materials section */
+.key-materials-section::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  width: 100vw;
+  height: 30vh;
+  background: linear-gradient(
+    to top,
+    #020201 0%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: -1;
+}
+
+.materials-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.materials-title {
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+}
+
+.materials-subtitle {
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0;
+  max-width: 500px;
+}
+
+.materials-grid {
+  display: flex;
+  flex-direction: row;
+  gap: clamp(60px, 10vw, 120px);
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.material-item {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.material-image-placeholder {
+  width: 200px;
+  height: 200px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.material-image {
+  width: clamp(160px, 14vw, 200px);
+  height: clamp(160px, 14vw, 200px);
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.material-add-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.9);
+  border: none;
+  color: #000;
+  font-size: 20px;
+  font-weight: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+  line-height: 1;
+}
+
+.material-add-icon:hover {
+  background-color: #fff;
+  transform: scale(1.1);
+}
+
+.material-name {
+  font-size: clamp(0.875rem, 1.5vw, 1.125rem);
+  font-weight: 400;
+  color: #fff;
+  text-align: center;
+  margin: 0;
+}
+
+/* Design Story Section */
+.old-design-story-section {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 40px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 60px;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  background-color: #000;
+}
+
+.design-story-text-container {
+  width: 100%;
+  padding: 0 clamp(40px, 10vw, 200px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.design-story-text {
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  line-height: 1.4;
+  color: #fff;
+  font-weight: 300;
+  text-align: center;
+  margin: 0;
+  max-width: 1000px;
+}
+
+.design-story-image-container {
+  position: relative;
+  width: 100vw;
+  height: 90vh;
+  min-height: 90vh;
+  background-color: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+}
+
+.design-story-video {
+  width: 120%;
+  height: 120%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Drive of the Future Section */
+.old-drive-future-section {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  height: 100vh;
+  background-image: url('https://prelaunch-rotoris.s3.ap-south-1.amazonaws.com/public/assets/products/Arvion/Arvion-watch-silhouette-desk.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: scroll;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  z-index: 2;
+  margin: 0;
+  padding: 0;
+}
+
+.drive-future-icons {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+
+.drive-future-icon {
+  width: 22px;
+  height: 34px;
+  opacity: 0.9;
+}
+
+.drive-future-text {
+  font-size: clamp(1.5rem, 3.5vw, 2.5rem);
+  font-weight: 600;
+  line-height: 1.2;
+  color: #fff;
+  text-align: center;
+  margin: 0;
+  padding: 0 clamp(60px, 20vw, 440px);
+  max-width: 1400px;
+  letter-spacing: -0.02em;
+}
+
+/* Laptop Consistency - Lock sizes for laptop screens (1024px - 1920px) */
+@media (min-width: 1024px) and (max-width: 1920px) {
+  .key-materials-section {
+    padding: 80px 40px;
+  }
+
+  .materials-header {
+    padding: 0 40px;
+  }
+
+  .materials-title {
+    font-size: 2.25rem;
+  }
+
+  .materials-subtitle {
+    font-size: 1.125rem;
+  }
+
+  .materials-grid {
+    gap: 100px;
+    padding: 0 40px;
+  }
+
+  .material-image {
+    width: 200px;
+    height: 200px;
+  }
+
+  .material-name {
+    font-size: 1rem;
+  }
+
+  .design-story-text-container {
+    padding: 0 120px;
+  }
+
+  .design-story-text {
+    font-size: 2.25rem;
+  }
+
+  .design-story-image-container {
+    height: 90vh;
+  }
+
+  .drive-future-text {
+    font-size: 2.25rem;
+    padding: 0 300px;
+  }
+}
+
+/* Extra large laptops and desktops (1920px+) */
+@media (min-width: 1921px) {
+  .materials-title {
+    font-size: 2.5rem;
+  }
+
+  .materials-subtitle {
+    font-size: 1.25rem;
+  }
+
+  .design-story-text {
+    font-size: 2.5rem;
+  }
+
+  .drive-future-text {
+    font-size: 2.5rem;
+    padding: 0 440px;
+  }
+}

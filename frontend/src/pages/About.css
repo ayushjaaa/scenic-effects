@@ -309,13 +309,13 @@
 }
 
 /* Key Materials Section */
-.materials-section {
+.key-materials-section {
   position: relative;
   z-index: 2;
   width: 100%;
   max-width: 1400px;
   margin: 80px auto 0;
-  padding: 40px clamp(40px, 8vw, 200px);
+
   display: flex;
   flex-direction: column;
   gap: 60px;
@@ -324,7 +324,7 @@
 }
 
 /* Gradient overlay from bottom for materials section */
-.materials-section::before {
+.key-materials-section::before {
   content: '';
   position: absolute;
   bottom: 0;
@@ -368,7 +368,7 @@
 .materials-grid {
   display: flex;
   flex-direction: row;
-  gap: clamp(40px, 6vw, 80px);
+  gap: clamp(60px, 10vw, 120px);
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
@@ -427,7 +427,7 @@
 }
 
 /* Design Story Section */
-.design-story-section {
+.old-design-story-section {
   position: relative;
   z-index: 2;
   width: 100%;
@@ -482,7 +482,7 @@
 }
 
 /* Drive of the Future Section */
-.drive-future-section {
+.old-drive-future-section {
   position: relative;
   width: 100%;
   min-height: 100vh;
@@ -780,11 +780,11 @@
     gap: clamp(100px, 10vw, 150px);
   }
 
-  .materials-section {
-    padding: 40px clamp(120px, 8vw, 180px);
+  .key-materials-section {
+
   }
 
-  .drive-future-section {
+  .old-drive-future-section {
     height: 100vh;
     min-height: 100vh;
     margin-bottom: 0;
@@ -811,9 +811,9 @@
     gap: 170px;
   }
 
-  .materials-section {
+  .key-materials-section {
     max-width: 1600px;
-    padding: 40px 200px;
+
   }
 
   .design-story-text {
@@ -832,7 +832,7 @@
 
 /* Specific fix for 1700px width */
 @media screen and (min-width: 1650px) and (max-width: 1750px) {
-  .drive-future-section {
+  .old-drive-future-section {
     height: 100vh;
     min-height: 100vh;
   }
@@ -842,7 +842,7 @@
     padding-top: 100px;
   }
 
-  .design-story-section {
+  .old-design-story-section {
     margin-bottom: 0;
   }
 }
@@ -981,8 +981,8 @@
   }
 
   /* Materials Section - Mobile */
-  .materials-section {
-    padding: 60px 24px;
+  .key-materials-section {
+
     gap: 40px;
   }
 
@@ -1001,7 +1001,7 @@
   }
 
   /* Design Story Section - Mobile */
-  .design-story-section {
+  .old-design-story-section {
     padding: 40px 0;
     margin: 0;
     width: 100vw;
@@ -1025,7 +1025,7 @@
   }
 
   /* Drive of the Future Section - Mobile */
-  .drive-future-section {
+  .old-drive-future-section {
     width: 100vw;
     margin-left: calc(-50vw + 50%);
     margin-right: calc(-50vw + 50%);

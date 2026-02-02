@@ -1,0 +1,61 @@
+/* Join Wishlist Button */
+.join-wishlist-button {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+
+  padding: 16px 40px;
+  font-size: 1.125rem;
+  font-weight: 400;
+  color: #fff;
+  background-color: rgba(45, 34, 26, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  outline: none;
+  border-radius: 50px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+
+  box-shadow: none;
+  transition: all 0.3s ease;
+
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.join-wishlist-button:hover {
+  background-color: rgba(45, 34, 26, 1);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateX(-50%) translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.join-wishlist-button:active {
+  transform: translateX(-50%) translateY(0);
+}
+
+.join-wishlist-button:focus {
+  outline: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Responsive Design */
+
+/* Mobile */
+@media (max-width: 768px) {
+  .join-wishlist-button {
+    bottom: 20px;
+    padding: 14px 32px;
+    font-size: 1rem;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .join-wishlist-button {
+    bottom: 15px;
+    padding: 12px 28px;
+    font-size: 0.9375rem;
+  }
+}

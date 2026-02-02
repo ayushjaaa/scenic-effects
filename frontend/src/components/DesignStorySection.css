@@ -1,0 +1,121 @@
+/* Design Story Section */
+.design-story-section {
+  position: relative;
+  width: 100%;
+  max-width: 1400px;
+  min-height: 100vh;
+  background: #1a1410;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+  margin: 0 auto;
+  padding: 80px 40px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Image Content */
+.design-story-image {
+  width: 100%;
+  height: 500px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.design-story-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Text Content */
+.design-story-text {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-left: 40px;
+}
+
+.design-story-label {
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.design-story-title {
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  line-height: 1.2;
+  color: #fff;
+  font-weight: 400;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.design-story-description {
+  font-size: clamp(1rem, 1.8vw, 1.25rem);
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 300;
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
+/* Responsive Design */
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .design-story-section {
+    grid-template-columns: 1fr;
+    gap: 60px;
+    padding: 60px 40px;
+  }
+
+  .design-story-text {
+    padding-left: 0;
+  }
+
+  .design-story-image {
+    height: 400px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .design-story-section {
+    gap: 50px;
+    padding: 60px 24px;
+    min-height: auto;
+  }
+
+  .design-story-text {
+    gap: 20px;
+  }
+
+  .design-story-title {
+    font-size: clamp(1.75rem, 6vw, 2.5rem);
+  }
+
+  .design-story-description {
+    font-size: clamp(0.9375rem, 3.5vw, 1.125rem);
+  }
+
+  .design-story-image {
+    height: 350px;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .design-story-section {
+    gap: 40px;
+    padding: 40px 20px;
+  }
+
+  .design-story-image {
+    height: 300px;
+  }
+}

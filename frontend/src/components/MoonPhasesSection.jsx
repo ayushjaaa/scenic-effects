@@ -53,29 +53,6 @@ const MoonPhasesSection = () => {
             A reminder that everything, even time, <strong>moves in phases just like the moon</strong>. Yet only the ones who endure are remembered.
           </p>
         </div>
-
-        {/* Join Waitlist Button */}
-        <div className="moon-phases-cta">
-          <button className="join-waitlist-button">
-            Join the waitlist
-            <svg
-              className="dropdown-icon"
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M4 6L8 10L12 6"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-        </div>
       </div>
     </section>
   );

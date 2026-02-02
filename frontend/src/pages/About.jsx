@@ -144,7 +144,7 @@ const About = () => {
         </div>
 
         {/* Key Materials Section */}
-        <div className="materials-section">
+        <div className="key-materials-section">
           <div className="materials-header">
             <h2 className="materials-title">Key Materials</h2>
             <p className="materials-subtitle">Built from elements that blend simplicity with strength</p>
@@ -181,7 +181,7 @@ const About = () => {
         </div>
 
         {/* Design Story Section */}
-        <div className="design-story-section">
+        <div className="old-design-story-section">
           <div className="design-story-text-container">
             <p className="design-story-text">
               Shaped one clean stroke at a time, Arvion grew from automotive design principles into a watch made for speed and forward momentum.
@@ -200,7 +200,7 @@ const About = () => {
         </div>
 
         {/* Drive of the Future Section */}
-        <div className="drive-future-section">
+        <div className="old-drive-future-section">
           <div className="drive-future-icons">
             <svg className="drive-future-icon" width="22" height="34" viewBox="0 0 22 34" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M21.7852 34H0.0604343V20.8357C0.0604343 20.8357 -2.25264 2.42224 21.7852 0V4.52299C21.7852 4.52299 8.15618 4.92762 7.41161 15.4258H21.7852V34Z" fill="white"/>
